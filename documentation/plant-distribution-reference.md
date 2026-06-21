@@ -6,6 +6,8 @@ Related: [world-generation-options.md](world-generation-options.md), [ecoregions
 
 **Last synced with code:** Terracraft 0.5.1, Materia 1.2.0.
 
+**Placement philosophy:** Gameplay-relevant plants (crops, rubber, etc.) follow geographic tags in Historical mode. **Decorative** plants with no distinct resource role may use broader “look-alike” placement — e.g. wisteria in the Mediterranean as ornamental. See [design-principles.md](design-principles.md).
+
 ---
 
 ## How to read this doc
@@ -99,7 +101,7 @@ Realm suffix on clones (`_palearctic`, `_neotropical`, `_afrotropical`, `_indoma
 | Vines (vanilla) | Minecraft | Vine | Jungle, sparse jungle clones | — | Same | Same | Tropics | — |
 | Glow lichen | Minecraft | Lichen | Most clone templates | — | Same | Same | Ubiquitous | — |
 | **Wild grape** | Materia | Vine | — | `#materia:temperate_forest` | `#terracraft:region_mediterranean` | `#terracraft:climate_temperate_forest` | Mediterranean, temperate | Historical: Med only; Biome: all forest clones |
-| **Wild wisteria** | Materia | Vine | — | `#materia:temperate_forest` | *(not placed)* | `#terracraft:climate_temperate_forest` | East Asia (ornamental elsewhere) | **Historical gap**; Biome mode global temperate forest |
+| **Wild wisteria** | Materia | Vine | — | `#materia:temperate_forest` | `#terracraft:region_indomalayan` + `#terracraft:region_mediterranean` (ornamental) | `#terracraft:climate_temperate_forest` | East Asia; ornamental in Mediterranean OK | **Bridge gap** — planned tags above; Biome mode global temperate forest |
 | **Wild hops** | Materia | Vine | — | *(no biome modifier in 1.20.1)* | *(not placed)* | *(not placed)* | Europe, W Asia, N America | **Not wired** — feature exists, no spawn rule |
 
 ### Grass, flowers & ground cover
@@ -175,7 +177,7 @@ Grouped by impact on “mostly consistent with reality” on Planet Earth **Hist
 | **Vanilla template bleed** | Pumpkin, melon, sugar cane, cactus, acacia/Oak “Mediterranean” follow clone **template**, not geography — global patches where the template allows. |
 | **Wild hops** | Materia block exists; **no** biome modifier on 1.20.1; Terracraft bridge does not add it. Target: Europe, W Asia, N America temperate forest. |
 | **Historical rubber & indigo** | Only in Biome mode (`climate_tropical`). Amazon / SE Asia rubber and tropical indigo missing in Historical. |
-| **Historical wisteria** | Only Biome mode temperate forest — no Indo-Malayan / East Asian historical rule. |
+| **Historical wisteria** | Bridge not wired yet — target Indo-Malayan + ornamental Mediterranean ([design-principles.md](design-principles.md)). |
 | **Eastern NA forest identity** | Temperate forest clones use generic oak/birch — no red maple, larch, or other regional trees. |
 | **Mediterranean biome feel** | `mediterranean_scrub` uses **savanna** template (acacia) — wrong aesthetic vs olive/cypress/esparto Materia layer. |
 | **Flax old-world tag** | `crop_old_world` omits `plains_palearctic`, `temperate_steppe`, `plains_indomalayan` — flax under-spawns in obvious Old World grasslands. |
@@ -209,7 +211,7 @@ Grouped by impact on “mostly consistent with reality” on Planet Earth **Hist
 | Wild hops | `#terracraft:region_palearctic` temperate forest + `#terracraft:crop_new_world` forest (N America) — **new tag** |
 | Rubber tree | `#terracraft:region_neotropical` jungle + `#terracraft:region_indomalayan` jungle |
 | Indigo | Tropical/subtropical clones by realm, not global Biome tag |
-| Wild wisteria | `#terracraft:region_indomalayan` + `#terracraft:region_palearctic` (China/Japan) |
+| Wild wisteria | `#terracraft:region_indomalayan` + `#terracraft:region_palearctic` (China/Japan) + `#terracraft:region_mediterranean` (ornamental, sparse) |
 | Flax | Expand `#terracraft:crop_old_world` to include `plains_palearctic`, `temperate_steppe`, `plains_indomalayan` |
 
 ---

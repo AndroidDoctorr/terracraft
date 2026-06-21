@@ -11,7 +11,7 @@ Real-world Earth terrain mod for Minecraft, inspired by [Terra 1:1](https://www.
 | `1.20.1/` | Forge 1.20.1 module — **active development** |
 | `1.21.1/` | Forge 1.21.1 module (bootstrap) |
 | `shared/` | Shared lang/assets across versions |
-| `documentation/` | Design notes — see [multi-version-setup.md](documentation/multi-version-setup.md) |
+| `documentation/` | Design notes — see [documentation/README.md](README.md) |
 | `tools/` | Ecoregion/biome generator scripts |
 
 ## Current status
@@ -36,13 +36,17 @@ gradlew runClient
 gradlew build
 ```
 
-For other versions, `cd` into that folder and use the same Gradle tasks. See [multi-version-setup.md](documentation/multi-version-setup.md).
+For other versions, `cd` into that folder and use the same Gradle tasks. See [multi-version-setup.md](multi-version-setup.md).
 
 ## Documentation index
 
-- [multi-version-setup.md](documentation/multi-version-setup.md) — version modules and porting
-- [world-generation-options.md](documentation/world-generation-options.md) — create-world settings
-- [plant-distribution-reference.md](documentation/plant-distribution-reference.md) — flora placement tables
-- [ecoregions-data.md](documentation/ecoregions-data.md) — WWF TEOW data
-- [elevation-scaling.md](documentation/elevation-scaling.md) — terrain height mapping
-- [variation-smoothing-detail-plan.md](documentation/variation-smoothing-detail-plan.md) — roadmap
+Full index: [documentation/README.md](README.md). Agent context: [../AGENTS.md](../AGENTS.md).
+
+- [multi-version-setup.md](multi-version-setup.md) — version modules and porting
+- [world-generation-options.md](world-generation-options.md) — create-world settings
+- [plant-distribution-reference.md](plant-distribution-reference.md) — flora placement tables
+- [ecoregions-data.md](ecoregions-data.md) — WWF TEOW data
+- [elevation-scaling.md](elevation-scaling.md) — terrain height mapping
+- [variation-smoothing-detail-plan.md](variation-smoothing-detail-plan.md) — roadmap
+- [design-principles.md](design-principles.md) — resolved decisions & design rules
+- [reference/](reference/) — architecture, code map, Materia bridge

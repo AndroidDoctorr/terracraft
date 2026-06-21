@@ -336,7 +336,7 @@ We will **not** ask Materia to change those files. Instead, Terracraft makes Mat
 
 Materia continues to define blocks, items, and **placed feature** IDs. Terracraft only decides **where** they spawn on Earth.
 
-**Ores:** Materia ore modifiers use `#materia:overworld` — they still run on Planet Earth. Acceptable for now; optional later pass to geo-gate via bridge duplicates. **Flora is the priority.**
+**Ores:** Materia ore modifiers use `#materia:overworld` — they still run on Planet Earth. **Acceptable until core worldgen is done.** Geographic ore placement is a **planned create-world UI option** (data source and density tuning TBD) — not in scope yet. **Flora is the priority.**
 
 ### Flora placement modes
 
@@ -434,7 +434,7 @@ If double-spawning ever appears (Materia + bridge on same block): add one line t
 | **Flax** (wild) | Eurasia | `#terracraft:crop_old_world` | Not in Americas |
 | **Olive** | Mediterranean, Middle East | `#terracraft:region_mediterranean` + eco override | Not in northern Europe taiga |
 | **Grape** | temperate + Mediterranean | med + `#terracraft:region_palearctic` forest variants | |
-| **Wisteria** | East Asia + ornamental elsewhere | `#terracraft:region_indomalayan` OR config ornamental | default: native range only |
+| **Wisteria** | East Asia + ornamental elsewhere | `#terracraft:region_indomalayan`, `#terracraft:region_mediterranean` (ornamental) | decorative look-alike OK in Med — [design-principles.md](design-principles.md) |
 | **Hops** | Europe, western Asia, eastern NA | ecoregion allow-list JSON | fix missing biome modifier |
 | **Rubber** | Amazon, SE Asia | `#terracraft:region_neotropical` + `#terracraft:region_indomalayan` | not Africa |
 | **Indigo** | tropics/subtropics | same as rubber | |
@@ -579,9 +579,12 @@ Phase 5  Terrain smoothing (bilinear DEM, shoreline)
 Phase 6  Feature gen audit on clones
 Phase 7  Ecoregion border anti-alias
 Phase 8  New content in Materia (tea, date palm…) + bridge entries only
+Phase 9  Ore geo-gating (create-world UI + deposit data) — after Phases 4–8 stable
 ```
 
 Each phase behind config flags where sensible.
+
+Mission-aligned ideas not yet scheduled: [design-principles.md](design-principles.md#mission-aligned-ideas-suggested-not-yet-in-roadmap).
 
 ---
 
@@ -611,15 +614,13 @@ Use `/terracraft coords` and F3 biome display (debug) to verify.
 | **Vegetation spill** | Partial (via Materia tags + border blend) | Feature density could later vary by distance-to-border |
 | **In-between biomes** | Planned | Optional third clone for common adjacency pairs (Mediterranean↔steppe, taiga↔tundra) |
 
-Buffer width is per-world (preset JSON) or global config. Increase for smoother edges; decrease for sharper regional accuracy.
+Buffer width is per-world (preset JSON) or global config. **Default: fixed 64 blocks** — no create-world UI yet; random width or distance-based functions are a later experiment. See [design-principles.md](design-principles.md).
 
 ---
 
-1. **Create-world UI** — Cycle buttons for flora, map scale, and vertical scale ship in v0.5.1; border-blend width still config-only.
-2. **Wisteria in historical mode** — Native Indo-Malayan only, or low-weight ornamental in Mediterranean (biome mode always wider)?
-3. **Ore geo-gating** — Replicate Materia ore bridge for Earth, or leave global overworld ores?
-4. **Clone count** — Full cross product (archetype × realm) vs minimal set (~40 clones) with tag overlap?
-5. **Mod rename** — `terracraft:` namespace is fine until rename; clone map regenerates either way.
+### Open questions (remaining)
+
+1. **Mod rename** — `terracraft:` namespace is fine until rename; clone map regenerates either way.
 
 ### Resolved
 
@@ -629,6 +630,12 @@ Buffer width is per-world (preset JSON) or global config. Increase for smoother 
 | Biome clones vs runtime tags | Clones with baked tags; runtime = variant + lookup only |
 | Materia repo changes | Avoid; Terracraft MateriaBridge |
 | Bridge mod vs inline | Inline in Terracraft first |
+| Create-world UI (core) | Flora, map scale, vertical scale shipped v0.5.1; border blend config-only for now |
+| Wisteria in Historical mode | Ornamental Mediterranean OK; native Indo-Malayan / East Asian ranges too — see [design-principles.md](design-principles.md) |
+| Ornamental / “close enough” plants | Mod-wide: decorative look-alikes OK when no gameplay/resource difference |
+| Ore geo-gating | **Deferred** — future create-world option; vanilla/Materia global ores until then |
+| Clone count | **Full archetype × realm cross product** as target model (~40 clones today is interim) |
+| Border blend width | Fixed default; UI and advanced edge rules later |
 
 ---
 

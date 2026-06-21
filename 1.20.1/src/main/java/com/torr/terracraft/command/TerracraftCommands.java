@@ -30,7 +30,6 @@ public final class TerracraftCommands
     {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         dispatcher.register(Commands.literal("tpll")
-                .requires(source -> source.hasPermission(2))
                 .then(Commands.argument("latitude", DoubleArgumentType.doubleArg(-90.0D, 90.0D))
                         .then(Commands.argument("longitude", DoubleArgumentType.doubleArg(-180.0D, 180.0D))
                                 .executes(context -> teleport(

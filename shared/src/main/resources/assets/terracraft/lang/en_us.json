@@ -2,6 +2,7 @@
   "commands.terracraft.tpll.success": "Teleported to %s, %s (elevation %s m, Y=%s)",
   "commands.terracraft.coords.success": "Position %s, %s, %s -> lat %s, lon %s, elevation %s m",
   "generator.terracraft.planet_earth": "Planet Earth",
+  "world_preset.terracraft.planet_earth": "Planet Earth",
   "terracraft.create_world.flora_placement": "Flora",
   "terracraft.create_world.flora.historical": "Historical",
   "terracraft.create_world.flora.biome": "Biome",

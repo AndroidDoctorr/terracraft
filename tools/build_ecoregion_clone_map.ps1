@@ -122,13 +122,18 @@ foreach ($feature in $geo.features) {
 }
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
-$historical | ConvertTo-Json -Compress | Set-Content -Path (Join-Path $OutputDir "clone_map_historical.json") -Encoding UTF8
-$biomeFlora | ConvertTo-Json -Compress | Set-Content -Path (Join-Path $OutputDir "clone_map_biome.json") -Encoding UTF8
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+function Write-Utf8NoBom([string]$Path, [string]$Content) {
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
+Write-Utf8NoBom (Join-Path $OutputDir "clone_map_historical.json") ($historical | ConvertTo-Json -Compress)
+Write-Utf8NoBom (Join-Path $OutputDir "clone_map_biome.json") ($biomeFlora | ConvertTo-Json -Compress)
 
 $unique = @{}
 foreach ($v in $historical.Values) { $unique[$v] = $true }
 foreach ($v in $biomeFlora.Values) { $unique[$v] = $true }
-$unique.Keys | Sort-Object | Set-Content -Path (Join-Path $OutputDir "required_biomes.txt") -Encoding UTF8
+Write-Utf8NoBom (Join-Path $OutputDir "required_biomes.txt") (($unique.Keys | Sort-Object) -join "`n")
 
 Write-Host "Wrote $($historical.Count) ECO_ID mappings to $OutputDir"
 Write-Host "Unique biomes required: $($unique.Count)"

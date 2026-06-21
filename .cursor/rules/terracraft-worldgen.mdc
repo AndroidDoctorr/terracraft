@@ -1,0 +1,42 @@
+---
+description: Terracraft worldgen, biomes, ecoregions, Materia bridge datapacks
+globs: 1.20.1/**/*.{java,json},tools/**/*,documentation/**/*.md
+alwaysApply: false
+---
+
+# Terracraft worldgen & flora
+
+## Pipeline
+
+DEM (Terrarium) → ecoregion (WWF/ArcGIS) → clone biome + elevation override → vanilla template features → optional Materia bridge.
+
+## Key paths (1.20.1)
+
+- Generator: `world/gen/TerracraftChunkGenerator.java`
+- Ecoregions: `geo/ecoregion/*`
+- Clone biomes: `data/terracraft/worldgen/biome/`
+- Flora tags: `data/terracraft/tags/worldgen/biome/`
+- Materia bridge: `data/forge/biome_modifier/terracraft_*.json`
+
+## Flora bridge checklist
+
+1. Edit tag JSON (`region_*`, `crop_*`, `climate_*`, `coastal_warm`)
+2. Edit or add `terracraft_*` biome modifier with `forge:mod_loaded` + `materia:*_placed`
+3. Update `documentation/plant-distribution-reference.md` (table + gaps)
+4. Regenerate clones if archetypes change: `tools/generate_terracraft_biomes.ps1`
+
+## Materia feature IDs
+
+Verify placed features exist in Materia repo before referencing. Bridge example:
+
+```json
+{
+  "type": "forge:add_features",
+  "biomes": "terracraft:crop_new_world",
+  "features": ["materia:wild_corn_placed"],
+  "step": "vegetal_decoration",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "materia" }]
+}
+```
+
+Historical modifiers: `terracraft_historical_*.json`. Biome mode: `terracraft_biome_flora_*.json`.

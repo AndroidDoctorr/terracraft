@@ -1,0 +1,35 @@
+---
+description: Terracraft mod — project context, mod boundaries, active version
+alwaysApply: true
+---
+
+# Terracraft
+
+Real-world Earth terrain mod (Planet Earth world type). Active development: **`1.20.1/`** Forge module. Bootstrap-only: `1.18.2/`, `1.19.2/`, `1.21.1/`.
+
+## Companion: Materia
+
+Optional soft dependency (`C:/MCMods/Materia`). Terracraft owns **geo placement** on Planet Earth via `data/forge/biome_modifier/terracraft_*.json`. Materia owns block/feature definitions. Do not move Planet Earth flora rules into Materia.
+
+## Read before editing
+
+- `AGENTS.md` — agent checklist
+- `documentation/plant-distribution-reference.md` — flora master table (update with any bridge change)
+- `documentation/reference/ARCHITECTURE.md` — generation pipeline
+
+## Conventions
+
+- Java 17, Forge 47.x (1.20.1)
+- Per-world settings: `flora_placement`, `horizontal_scale`, `elevation_mapping` on biome source
+- Flora modes: **Historical** (geographic tags) vs **Biome** (climate tags)
+- Tag + bridge changes: update JSON tags, biome modifiers, and plant-distribution-reference.md together
+- Minimize scope; match existing naming (`com.torr.terracraft`, lowercase mod main class)
+
+## Design rules
+
+- Decorative / look-alike flora OK when no gameplay difference — see `documentation/design-principles.md`
+- Ore geo-gating: deferred (future create-world UI); clone target: archetype × realm cross product
+
+## Deferred (do not fix unless asked)
+
+Potato Old World note; ore geo-gating; border blend UI; historical bridge gaps (rubber, indigo, wisteria wiring, hops).

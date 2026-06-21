@@ -8,6 +8,12 @@ $templateDir = Join-Path $PSScriptRoot "biome_templates"
 
 New-Item -ItemType Directory -Force -Path $biomeOut, $tagOut | Out-Null
 
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+function Write-Utf8NoBom([string]$Path, [string]$Content) {
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
 function Pick-Template([string]$id) {
     if ($id -match "jungle") { return "jungle" }
     if ($id -match "mangrove") { return "mangrove_swamp" }
@@ -58,7 +64,9 @@ foreach ($line in Get-Content $required) {
     if (-not (Test-Path $templatePath)) { throw "Missing template $templatePath" }
     $json = Get-Content -Raw $templatePath | ConvertFrom-Json
     $json = Tune-Biome $json $short
-    $json | ConvertTo-Json -Depth 20 -Compress | Set-Content -Path (Join-Path $biomeOut "$short.json") -Encoding UTF8
+    $json | ConvertTo-Json -Depth 20 -Compress | ForEach-Object {
+        Write-Utf8NoBom (Join-Path $biomeOut "$short.json") $_
+    }
 
     $earthTag += $full
     if ($short -match "mediterranean") { $regionMediterranean += $full; $regionMediterraneanFlora += $full; $coastalWarm += $full }
@@ -81,7 +89,7 @@ foreach ($line in Get-Content $required) {
 
 function Write-Tag([string]$name, [string[]]$values) {
     $obj = @{ replace = $false; values = ($values | Sort-Object -Unique) }
-    $obj | ConvertTo-Json -Compress | Set-Content -Path (Join-Path $tagOut "$name.json") -Encoding UTF8
+    Write-Utf8NoBom (Join-Path $tagOut "$name.json") ($obj | ConvertTo-Json -Compress)
 }
 
 Write-Tag "earth" $earthTag

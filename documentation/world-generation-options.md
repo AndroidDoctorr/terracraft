@@ -47,7 +47,9 @@ Tune steepness via `coastalVerticalScale`, `verticalScale`, and `elevationCompre
 
 ## Ecoregion border blend
 
-`ecoregion_border_blend_blocks` (default **64**) controls vegetation spillover at ecoregion borders. Configurable in preset JSON or `terracraft-common.toml`; not yet on the create-world UI.
+`ecoregion_border_blend_blocks` (default **64**) controls vegetation spillover at ecoregion borders. Configurable in preset JSON or `terracraft-common.toml`.
+
+**Current policy:** fixed default width — sufficient for early playtesting. Create-world UI exposure, random variation, and distance-based edge functions are **deferred** ([design-principles.md](design-principles.md)).
 
 ---
 
@@ -57,6 +59,19 @@ Tune steepness via `coastalVerticalScale`, `verticalScale`, and `elevationCompre
 - **Biome** — climate Terracraft tags (`climate_grassy`, `climate_tropical`, …)
 
 Materia features use `forge:mod_loaded`. Terracraft runs without Materia; with Materia 1.2.0+ regional plants appear on the appropriate tags.
+
+Decorative plants may use broader “look-alike” placement when there is no gameplay difference — see [design-principles.md](design-principles.md).
+
+---
+
+## Planned options (not implemented)
+
+Future create-world controls discussed in design docs:
+
+| Control | Saved field (proposed) | Purpose | Status |
+|---------|------------------------|---------|--------|
+| **Ore placement** | `ore_placement` (TBD) | Geographic / density-aware deposits vs global vanilla or Materia overworld rules | **Deferred** — needs deposit data and tuning; vanilla/Materia ores fine until terrain, biomes, and flora are solid |
+| **Border blend** | `ecoregion_border_blend_blocks` | Expose spillover width on World tab | **Deferred** — config/datapack only for now |
 
 ---
 

@@ -2,6 +2,7 @@ package com.torr.terracraft.world.gen;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.torr.terracraft.terracraft;
 import com.torr.terracraft.config.ElevationMappingMode;
 import com.torr.terracraft.config.FloraPlacementMode;
 import com.torr.terracraft.config.PlanetEarthSettingsHolder;
@@ -208,6 +209,12 @@ public class TerracraftBiomeSource extends BiomeSource
 
     private Holder<Biome> resolveBiome(ResourceKey<Biome> biomeKey)
     {
+        if (TerracraftBiomes.isTerracraft(biomeKey) && !TerracraftBiomes.isRegistered(biomeKey))
+        {
+            terracraft.LOGGER.warn("Unregistered Terracraft biome {} — falling back to plains_palearctic", biomeKey.location());
+            biomeKey = TerracraftBiomes.PLAINS_PALEARCTIC;
+        }
+
         return biomeLookup.get(biomeKey)
                 .or(() -> biomeLookup.get(TerracraftBiomes.PLAINS_PALEARCTIC))
                 .or(() -> biomeLookup.get(Biomes.PLAINS))
