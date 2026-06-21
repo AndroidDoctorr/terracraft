@@ -4,56 +4,45 @@ Real-world Earth terrain mod for Minecraft, inspired by [Terra 1:1](https://www.
 
 ## Layout
 
-- `1.20.1/` — Forge 1.20.1 module (run Gradle tasks from here)
-- `shared/` — shared assets and datapack resources across versions
-- `documentation/` — design notes
+| Path | Purpose |
+|------|---------|
+| `1.18.2/` | Forge 1.18.2 module (bootstrap) |
+| `1.19.2/` | Forge 1.19.2 module (bootstrap) |
+| `1.20.1/` | Forge 1.20.1 module — **active development** |
+| `1.21.1/` | Forge 1.21.1 module (bootstrap) |
+| `shared/` | Shared lang/assets across versions |
+| `documentation/` | Design notes — see [multi-version-setup.md](documentation/multi-version-setup.md) |
+| `tools/` | Ecoregion/biome generator scripts |
 
-## Current status (0.2.0)
+## Current status
 
-- AWS Terrarium DEM tiles with on-disk cache (`/.minecraft/terracraft/dem_cache/`)
-- **Planet Earth** world preset on the create-world screen
-- Climate-based biome selection (latitude + elevation + pseudo-rainfall)
-- `/tpll <lat> <lon> [elevationMeters]` and `/terracraft coords`
+**1.20.1 (v0.5.1)** — Planet Earth world type, WWF ecoregion biomes, DEM terrain, Materia bridge, create-world UI options.
 
-## Try in-game
+**1.18.2 / 1.19.2 / 1.21.1** — Gradle + mod metadata wired; loads in-game as empty bootstrap (`0.0.1-bootstrap`). Gameplay port not started.
 
-1. **Create New World** → **World** tab → **World Type** → choose **Planet Earth**  
-   (It appears alongside Default, Amplified, Large Biomes, etc.)
-2. First exploration downloads DEM tiles (cached in `.minecraft/terracraft/dem_cache/`). Expect pauses while tiles fetch.
+## Try in-game (1.20.1)
+
+1. **Create New World** → **World** tab → **World Type** → **Planet Earth**
+2. Set **Flora**, **Map scale**, and **Vertical scale** with the cycle buttons below the world type.
 3. `/tpll 36.066 -112.117` — Grand Canyon area.
-4. `/tpll 27.988 -86.925 8848` — Everest (vertically compressed into vanilla height).
+4. `/tpll 27.988 -86.925 8848` — Everest.
 5. `/terracraft coords` — lat/lon/elevation at your position.
-
-## Config (`config/terracraft-common.toml`)
-
-| Option | Default | Purpose |
-|--------|---------|---------|
-| `useStubElevation` | `false` | Procedural hills, no network |
-| `demZoom` | `12` | Tile resolution (8–15) |
-| `verticalScale` | `0.05` | Real meters → block Y compression |
-| `horizontalScale` | `100000` | Blocks per degree |
-
-## Biomes
-
-Biomes use **real elevation** plus a simplified climate model:
-
-- Latitude drives temperature (equator → jungle/savanna, poles → snow/taiga).
-- Pseudo-rainfall (deterministic noise from lat/lon) splits deserts vs forests vs jungles.
-- Elevation drives oceans, beaches, alpine peaks, and snow line.
-
-This is not as accurate as Terra 1:1’s soil/climate databases, but broad regions should look recognizable.
-
-## Next steps
-
-1. Real precipitation / Koppen climate datasets
-2. OSM water polygons (rivers, lakes)
-3. Optional CubicChunks when CC3 is usable
 
 ## Development
 
 ```bat
 cd 1.20.1
 gradlew runClient
-gradlew runServer
 gradlew build
 ```
+
+For other versions, `cd` into that folder and use the same Gradle tasks. See [multi-version-setup.md](documentation/multi-version-setup.md).
+
+## Documentation index
+
+- [multi-version-setup.md](documentation/multi-version-setup.md) — version modules and porting
+- [world-generation-options.md](documentation/world-generation-options.md) — create-world settings
+- [plant-distribution-reference.md](documentation/plant-distribution-reference.md) — flora placement tables
+- [ecoregions-data.md](documentation/ecoregions-data.md) — WWF TEOW data
+- [elevation-scaling.md](documentation/elevation-scaling.md) — terrain height mapping
+- [variation-smoothing-detail-plan.md](documentation/variation-smoothing-detail-plan.md) — roadmap
