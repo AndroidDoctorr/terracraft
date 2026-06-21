@@ -1,0 +1,17 @@
+{
+  "type": "forge:add_features",
+  "biomes": "terracraft:climate_temperate_forest",
+  "features": [
+    "materia:wild_grape_vine_placed",
+    "materia:wild_wisteria_vine_placed",
+    "materia:cypress_tree_placed",
+    "materia:tea_bush_placed"
+  ],
+  "step": "vegetal_decoration",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "materia"
+    }
+  ]
+}

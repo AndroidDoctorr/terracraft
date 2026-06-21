@@ -1,0 +1,39 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "terracraft:earth",
+      "generator": {
+        "type": "terracraft:earth",
+        "biome_source": {
+          "type": "terracraft:earth",
+          "seed": 0,
+          "flora_placement": "historical",
+          "horizontal_scale": 100000,
+          "elevation_mapping": "coastal_log",
+          "ecoregion_border_blend_blocks": 64
+        }
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "preset": "minecraft:nether"
+        },
+        "settings": "minecraft:nether"
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:the_end"
+        },
+        "settings": "minecraft:end"
+      }
+    }
+  }
+}

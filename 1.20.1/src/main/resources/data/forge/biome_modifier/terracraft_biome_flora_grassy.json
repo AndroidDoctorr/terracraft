@@ -1,0 +1,19 @@
+{
+  "type": "forge:add_features",
+  "biomes": "terracraft:climate_grassy",
+  "features": [
+    "materia:wild_corn_placed",
+    "materia:wild_peppers_placed",
+    "materia:wild_beans_placed",
+    "materia:wild_squash_placed",
+    "materia:wild_flax_placed",
+    "materia:wild_cotton_placed"
+  ],
+  "step": "vegetal_decoration",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "materia"
+    }
+  ]
+}

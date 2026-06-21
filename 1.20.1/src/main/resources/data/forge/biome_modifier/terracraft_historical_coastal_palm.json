@@ -1,0 +1,14 @@
+{
+  "type": "forge:add_features",
+  "biomes": "terracraft:coastal_warm",
+  "features": [
+    "materia:palm_tree_placed"
+  ],
+  "step": "vegetal_decoration",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "materia"
+    }
+  ]
+}

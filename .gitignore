@@ -1,0 +1,12 @@
+diff
+error_logs
+META-INF
+build
+reference
+.gradle
+.idea
+.vscode
+.settings
+.classpath
+.project
+.metadata

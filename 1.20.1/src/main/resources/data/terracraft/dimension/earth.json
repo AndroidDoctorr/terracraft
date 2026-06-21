@@ -1,0 +1,10 @@
+{
+  "type": "terracraft:earth",
+  "generator": {
+    "type": "terracraft:earth",
+    "biome_source": {
+      "type": "terracraft:earth",
+      "seed": 0
+    }
+  }
+}

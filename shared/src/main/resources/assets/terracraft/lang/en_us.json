@@ -1,0 +1,23 @@
+{
+  "commands.terracraft.tpll.success": "Teleported to %s, %s (elevation %s m, Y=%s)",
+  "commands.terracraft.coords.success": "Position %s, %s, %s -> lat %s, lon %s, elevation %s m",
+  "generator.terracraft.planet_earth": "Planet Earth",
+  "terracraft.create_world.flora_placement": "Flora",
+  "terracraft.create_world.flora.historical": "Historical",
+  "terracraft.create_world.flora.biome": "Biome",
+  "terracraft.create_world.horizontal_scale": "Map scale",
+  "terracraft.create_world.scale.one_to_one": "1:1",
+  "terracraft.create_world.scale.one_to_two": "1:2",
+  "terracraft.create_world.scale.one_to_four": "1:4",
+  "terracraft.create_world.elevation_mapping": "Vertical scale",
+  "terracraft.create_world.elevation.coastal_log": "Logarithmic",
+  "terracraft.create_world.elevation.linear": "Linear",
+  "biome.terracraft.mediterranean_scrub": "Mediterranean Scrub",
+  "biome.terracraft.temperate_steppe": "Temperate Steppe",
+  "biome.terracraft.semi_arid_scrub": "Semi-Arid Scrub",
+  "biome.terracraft.chaparral_nearctic": "Chaparral",
+  "biome.terracraft.montane_meadow": "Montane Meadow",
+  "biome.terracraft.floodplain_meadow": "Floodplain Meadow",
+  "biome.terracraft.tropical_dry_forest": "Tropical Dry Forest",
+  "biome.terracraft.mangrove_coastal": "Mangrove Coast"
+}

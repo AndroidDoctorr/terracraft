@@ -1,0 +1,15 @@
+{
+  "type": "forge:add_features",
+  "biomes": "terracraft:region_indomalayan",
+  "features": [
+    "materia:wild_rice_placed",
+    "materia:tea_bush_placed"
+  ],
+  "step": "vegetal_decoration",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "materia"
+    }
+  ]
+}
