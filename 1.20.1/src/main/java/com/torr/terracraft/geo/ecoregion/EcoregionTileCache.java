@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -61,6 +62,30 @@ public final class EcoregionTileCache
         return cacheRoot;
     }
 
+    public void prefetchArea(double minLat, double maxLat, double minLon, double maxLon)
+    {
+        TerrariumTileMath.TileRange range = TerrariumTileMath.tilesCovering(zoom, minLat, maxLat, minLon, maxLon);
+        List<CompletableFuture<int[][]>> pending = new ArrayList<>();
+
+        for (int tileX = range.minTileX(); tileX <= range.maxTileX(); tileX++)
+        {
+            for (int tileY = range.minTileY(); tileY <= range.maxTileY(); tileY++)
+            {
+                TileKey key = new TileKey(zoom, tileX, tileY);
+                if (memoryCache.containsKey(key))
+                {
+                    continue;
+                }
+                pending.add(startTileLoad(key));
+            }
+        }
+
+        if (!pending.isEmpty())
+        {
+            CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).join();
+        }
+    }
+
     private int[][] getTileEcoIds(int tileX, int tileY)
     {
         TileKey key = new TileKey(zoom, tileX, tileY);
@@ -70,19 +95,27 @@ public final class EcoregionTileCache
             return cached;
         }
 
-        CompletableFuture<int[][]> pending = inFlight.computeIfAbsent(key, ignored ->
-                CompletableFuture.supplyAsync(() -> loadTileEcoIds(key), rasterExecutor));
+        return startTileLoad(key).join();
+    }
 
-        try
+    private CompletableFuture<int[][]> startTileLoad(TileKey key)
+    {
+        return inFlight.computeIfAbsent(key, ignored ->
         {
-            int[][] loaded = pending.join();
-            memoryCache.putIfAbsent(key, loaded);
-            return loaded;
-        }
-        finally
-        {
-            inFlight.remove(key);
-        }
+            CompletableFuture<int[][]> pending = CompletableFuture.supplyAsync(
+                    () -> loadTileEcoIds(key),
+                    rasterExecutor
+            );
+            pending.whenComplete((loaded, error) ->
+            {
+                if (loaded != null)
+                {
+                    memoryCache.putIfAbsent(key, loaded);
+                }
+                inFlight.remove(key);
+            });
+            return pending;
+        });
     }
 
     private int[][] loadTileEcoIds(TileKey key)

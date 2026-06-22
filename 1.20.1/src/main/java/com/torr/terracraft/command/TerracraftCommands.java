@@ -3,13 +3,20 @@ package com.torr.terracraft.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.torr.terracraft.geo.BiomePlacement;
 import com.torr.terracraft.geo.BlockGeoTarget;
 import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.GeoCoordinate;
+import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
+import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -77,11 +84,22 @@ public final class TerracraftCommands
     private static int showCoords(CommandSourceStack source) throws CommandSyntaxException
     {
         ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = player.serverLevel();
         GeoCoordinate geo = EarthProjection.blockToGeo(
                 player.blockPosition().getX(),
                 player.blockPosition().getY(),
                 player.blockPosition().getZ()
         );
+        Holder<Biome> placedBiome = level.getBiome(player.blockPosition());
+        String placedBiomeId = placedBiome.unwrapKey()
+                .map(key -> key.location().toString())
+                .orElse("unknown");
+        ResourceKey<Biome> classifiedBiome = BiomePlacement.classify(
+                geo.latitude(),
+                geo.longitude(),
+                geo.elevationMeters()
+        );
+        EcoregionInfo ecoregion = EcoregionSamplerHolder.get().sample(geo.latitude(), geo.longitude());
 
         source.sendSuccess(() -> Component.translatable(
                 "commands.terracraft.coords.success",
@@ -90,7 +108,11 @@ public final class TerracraftCommands
                 player.blockPosition().getZ(),
                 formatCoord(geo.latitude()),
                 formatCoord(geo.longitude()),
-                formatCoord(geo.elevationMeters())
+                formatCoord(geo.elevationMeters()),
+                placedBiomeId,
+                classifiedBiome.location().toString(),
+                ecoregion.name(),
+                Integer.toString(ecoregion.ecoId())
         ), false);
         return 1;
     }

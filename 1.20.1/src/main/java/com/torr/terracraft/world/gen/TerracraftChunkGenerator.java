@@ -3,6 +3,7 @@ package com.torr.terracraft.world.gen;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.torr.terracraft.config.TerracraftConfig;
+import com.torr.terracraft.geo.ChunkGeoPrefetch;
 import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import net.minecraft.core.BlockPos;
@@ -25,11 +26,17 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class TerracraftChunkGenerator extends ChunkGenerator
 {
+    private static final Set<Heightmap.Types> TERRAIN_HEIGHTMAPS = Set.of(
+            Heightmap.Types.OCEAN_FLOOR_WG,
+            Heightmap.Types.WORLD_SURFACE_WG
+    );
+
     public static final Codec<TerracraftChunkGenerator> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource)
@@ -63,7 +70,9 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                                                         StructureManager structureManager, ChunkAccess chunk)
     {
         return CompletableFuture.supplyAsync(() -> {
+            ChunkGeoPrefetch.prefetch(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ());
             fillTerrain(chunk, randomState);
+            Heightmap.primeHeightmaps(chunk, TERRAIN_HEIGHTMAPS);
             return chunk;
         }, executor);
     }

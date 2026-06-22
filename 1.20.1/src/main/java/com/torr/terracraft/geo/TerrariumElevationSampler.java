@@ -21,4 +21,9 @@ public final class TerrariumElevationSampler implements ElevationSampler
     {
         return cache;
     }
+
+    public int zoom()
+    {
+        return zoom;
+    }
 }

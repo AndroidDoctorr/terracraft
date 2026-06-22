@@ -14,6 +14,8 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +63,30 @@ public final class DemTileCache
         return cacheRoot;
     }
 
+    public void prefetchArea(int zoom, double minLat, double maxLat, double minLon, double maxLon)
+    {
+        TerrariumTileMath.TileRange range = TerrariumTileMath.tilesCovering(zoom, minLat, maxLat, minLon, maxLon);
+        List<CompletableFuture<double[][]>> pending = new ArrayList<>();
+
+        for (int tileX = range.minTileX(); tileX <= range.maxTileX(); tileX++)
+        {
+            for (int tileY = range.minTileY(); tileY <= range.maxTileY(); tileY++)
+            {
+                TileKey key = new TileKey(zoom, tileX, tileY);
+                if (memoryCache.containsKey(key))
+                {
+                    continue;
+                }
+                pending.add(startTileLoad(key));
+            }
+        }
+
+        if (!pending.isEmpty())
+        {
+            CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).join();
+        }
+    }
+
     private double[][] getTileHeights(int zoom, int tileX, int tileY)
     {
         TileKey key = new TileKey(zoom, tileX, tileY);
@@ -70,19 +96,27 @@ public final class DemTileCache
             return cached;
         }
 
-        CompletableFuture<double[][]> pending = inFlight.computeIfAbsent(key, ignored ->
-                CompletableFuture.supplyAsync(() -> loadTileHeights(key), downloadExecutor));
+        return startTileLoad(key).join();
+    }
 
-        try
+    private CompletableFuture<double[][]> startTileLoad(TileKey key)
+    {
+        return inFlight.computeIfAbsent(key, ignored ->
         {
-            double[][] loaded = pending.join();
-            memoryCache.putIfAbsent(key, loaded);
-            return loaded;
-        }
-        finally
-        {
-            inFlight.remove(key);
-        }
+            CompletableFuture<double[][]> pending = CompletableFuture.supplyAsync(
+                    () -> loadTileHeights(key),
+                    downloadExecutor
+            );
+            pending.whenComplete((loaded, error) ->
+            {
+                if (loaded != null)
+                {
+                    memoryCache.putIfAbsent(key, loaded);
+                }
+                inFlight.remove(key);
+            });
+            return pending;
+        });
     }
 
     private double[][] loadTileHeights(TileKey key)

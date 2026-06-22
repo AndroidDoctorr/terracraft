@@ -27,6 +27,19 @@ public final class TerrariumTileMath
         }
     }
 
+    public record TileRange(int minTileX, int maxTileX, int minTileY, int maxTileY)
+    {
+    }
+
+    public static TileRange tilesCovering(int zoom, double minLat, double maxLat, double minLon, double maxLon)
+    {
+        int minTileX = longitudeToTileX(minLon, zoom);
+        int maxTileX = longitudeToTileX(maxLon, zoom);
+        int minTileY = latitudeToTileY(maxLat, zoom);
+        int maxTileY = latitudeToTileY(minLat, zoom);
+        return new TileRange(minTileX, maxTileX, minTileY, maxTileY);
+    }
+
     public static TileBounds tileBounds(int zoom, int tileX, int tileY)
     {
         double tiles = 1 << zoom;
