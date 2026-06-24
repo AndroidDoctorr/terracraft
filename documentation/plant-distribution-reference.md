@@ -222,7 +222,7 @@ When adding Materia plants or Terracraft tags, update:
 
 1. This file (master table + gap list).
 2. `tools/generate_terracraft_biomes.ps1` (tag membership).
-3. `data/forge/biome_modifier/terracraft_*.json` (bridge rules).
+3. `data/terracraft/forge/biome_modifier/terracraft_*.json` (bridge rules; Mediterranean trees are in `mediterranean_scrub.json`).
 4. [world-generation-options.md](world-generation-options.md) if UI/presets change.
 
 Source of truth for tag membership: generated JSON under `data/terracraft/tags/worldgen/biome/`.

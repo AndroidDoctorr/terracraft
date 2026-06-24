@@ -83,14 +83,17 @@ public final class TerracraftBootstrap
 
             if (!Files.isRegularFile(geoJsonPath))
             {
-                terracraft.LOGGER.warn("Terracraft ecoregions: data file missing at {} — using climate fallback only",
-                        geoJsonPath.toAbsolutePath());
+                terracraft.LOGGER.warn(
+                        "Terracraft ecoregions: data file missing at {} — geographic/climate fallback only. "
+                                + "Run tools/download_ecoregions.ps1 or enable autoDownloadEcoregionData.",
+                        geoJsonPath.toAbsolutePath()
+                );
                 EcoregionSamplerHolder.resetToStub();
                 return;
             }
 
             WwfEcoregionDataset dataset = WwfEcoregionDataset.load(geoJsonPath);
-            Path cacheRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("ecoregion_cache");
+            Path cacheRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("ecoregion_cache_v2");
             ecoregionTileCache = new EcoregionTileCache(cacheRoot, TerracraftConfig.ecoregionZoom.get(), dataset);
             EcoregionSamplerHolder.set(new CachedEcoregionSampler(ecoregionTileCache));
             terracraft.LOGGER.info("Terracraft ecoregions: {} unique regions, zoom {}, cache {}",

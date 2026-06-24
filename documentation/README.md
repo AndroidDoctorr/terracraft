@@ -18,6 +18,7 @@ Design notes and reference for the Terracraft Earth worldgen mod.
 ## Flora & Materia
 
 - [plant-distribution-reference.md](plant-distribution-reference.md) — **master table** for vanilla and Materia vegetation on Planet Earth; geographic/climate tags; known gaps and maintenance checklist
+- [biome-flora-inventory.md](biome-flora-inventory.md) — **biome-by-biome spawn checklist** for playtesting density and diversity
 
 ## Planning
 

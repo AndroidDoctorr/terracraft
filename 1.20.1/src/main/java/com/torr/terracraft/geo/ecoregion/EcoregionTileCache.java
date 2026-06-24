@@ -235,16 +235,18 @@ public final class EcoregionTileCache
 
     static int encodeEcoId(int ecoId)
     {
-        int red = (ecoId >> 8) & 0xFF;
-        int green = ecoId & 0xFF;
-        return (red << 16) | (green << 8);
+        int red = (ecoId >> 16) & 0xFF;
+        int green = (ecoId >> 8) & 0xFF;
+        int blue = ecoId & 0xFF;
+        return (red << 16) | (green << 8) | blue;
     }
 
     static int decodeEcoId(int rgb)
     {
         int red = (rgb >> 16) & 0xFF;
         int green = (rgb >> 8) & 0xFF;
-        return (red << 8) | green;
+        int blue = rgb & 0xFF;
+        return (red << 16) | (green << 8) | blue;
     }
 
     public void shutdown()

@@ -12,8 +12,10 @@ import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
+import com.torr.terracraft.world.biome.AssignableBiomes;
 import com.torr.terracraft.world.biome.BiomeTransition;
 import com.torr.terracraft.world.biome.TerracraftBiomes;
+import com.torr.terracraft.world.biome.TerracraftClimateMapper;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.QuartPos;
@@ -49,12 +51,10 @@ public class TerracraftBiomeSource extends BiomeSource
             ).apply(instance, TerracraftBiomeSource::new)
     );
 
-    private static final List<ResourceKey<Biome>> VANILLA_BIOMES = List.of(
-            Biomes.OCEAN, Biomes.DEEP_OCEAN, Biomes.WARM_OCEAN, Biomes.FROZEN_OCEAN, Biomes.DEEP_FROZEN_OCEAN,
-            Biomes.BEACH, Biomes.SNOWY_BEACH, Biomes.STONY_SHORE,
-            Biomes.GROVE, Biomes.STONY_PEAKS, Biomes.JAGGED_PEAKS, Biomes.SNOWY_SLOPES,
-            Biomes.PLAINS
-    );
+    private static List<ResourceKey<Biome>> vanillaAndTerracraftBiomes()
+    {
+        return AssignableBiomes.allKeys();
+    }
 
     private final long seed;
     private final FloraPlacementMode floraPlacement;
@@ -172,8 +172,7 @@ public class TerracraftBiomeSource extends BiomeSource
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes()
     {
-        List<ResourceKey<Biome>> possible = new ArrayList<>(VANILLA_BIOMES);
-        possible.addAll(TerracraftBiomes.allRegistered());
+        List<ResourceKey<Biome>> possible = new ArrayList<>(vanillaAndTerracraftBiomes());
         return possible.stream()
                 .map(biomeLookup::get)
                 .flatMap(java.util.Optional::stream);
@@ -187,7 +186,7 @@ public class TerracraftBiomeSource extends BiomeSource
         double latitude = EarthProjection.blockZToLatitude(blockZ);
         double longitude = EarthProjection.blockXToLongitude(blockX);
         double elevationMeters = ElevationSamplerHolder.get().sampleElevationMeters(latitude, longitude);
-        ResourceKey<Biome> biomeKey = BiomePlacement.classify(latitude, longitude, elevationMeters);
+        ResourceKey<Biome> biomeKey = BiomePlacement.classify(latitude, longitude, elevationMeters, floraPlacement);
 
         if (TerracraftBiomes.isTerracraft(biomeKey))
         {
@@ -204,19 +203,24 @@ public class TerracraftBiomeSource extends BiomeSource
             );
         }
 
-        return resolveBiome(biomeKey);
+        return resolveBiome(biomeKey, latitude, longitude);
     }
 
-    private Holder<Biome> resolveBiome(ResourceKey<Biome> biomeKey)
+    private Holder<Biome> resolveBiome(ResourceKey<Biome> biomeKey, double latitude, double longitude)
     {
-        if (TerracraftBiomes.isTerracraft(biomeKey) && !TerracraftBiomes.isRegistered(biomeKey))
+        ResourceKey<Biome> resolvedKey = biomeKey;
+        if (!TerracraftBiomes.isTerracraft(resolvedKey)
+                && !TerracraftClimateMapper.isVanillaOceanOrAlpine(resolvedKey))
         {
-            terracraft.LOGGER.warn("Unregistered Terracraft biome {} — falling back to plains_palearctic", biomeKey.location());
-            biomeKey = TerracraftBiomes.PLAINS_PALEARCTIC;
+            resolvedKey = TerracraftClimateMapper.toTerracraftLandBiome(resolvedKey, latitude, longitude);
         }
 
-        return biomeLookup.get(biomeKey)
-                .or(() -> biomeLookup.get(TerracraftBiomes.PLAINS_PALEARCTIC))
+        ResourceKey<Biome> lookupKey = resolvedKey;
+        return biomeLookup.get(lookupKey)
+                .or(() -> {
+                    terracraft.LOGGER.warn("Biome {} missing from registry - falling back to plains_palearctic", lookupKey.location());
+                    return biomeLookup.get(TerracraftBiomes.PLAINS_PALEARCTIC);
+                })
                 .or(() -> biomeLookup.get(Biomes.PLAINS))
                 .orElseThrow(() -> new IllegalStateException("Fallback plains biome missing from registry"));
     }

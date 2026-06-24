@@ -10,3 +10,15 @@ reference
 .classpath
 .project
 .metadata
+
+# Downloaded / generated datasets (GitHub 100 MB limit — use tools/download_ecoregions.ps1)
+tools/*.geojson
+tools/**/*.geojson
+
+# Local Minecraft Terracraft cache (DEM tiles, ecoregion GeoJSON, etc.)
+terracraft/
+
+# IDE / run configs
+run/
+logs/
+*.iml

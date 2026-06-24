@@ -1,0 +1,1 @@
+{"feature":"materia:palm_tree","placement":[{"type":"minecraft:rarity_filter","chance":9},{"type":"minecraft:in_square"},{"type":"minecraft:heightmap","heightmap":"WORLD_SURFACE_WG"},{"predicate":{"state":{"Name":"materia:palm_sapling"},"type":"minecraft:would_survive"},"type":"minecraft:block_predicate_filter"},{"type":"minecraft:biome"}]}

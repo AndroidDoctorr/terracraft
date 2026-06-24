@@ -64,6 +64,14 @@ public final class TerracraftConfig
             .comment("Maximum concurrent DEM tile downloads.")
             .defineInRange("demDownloadThreads", 4, 1, 16);
 
+    public static final ForgeConfigSpec.BooleanValue demBilinearSampling = BUILDER
+            .comment("Smooth terrain by bilinear-interpolating DEM pixels instead of nearest-neighbor column sampling.")
+            .define("demBilinearSampling", true);
+
+    public static final ForgeConfigSpec.DoubleValue depressionMinDepthMeters = BUILDER
+            .comment("Minimum real-world depth (meters) below the local spill elevation to classify a cell as an inland lake basin.")
+            .defineInRange("depressionMinDepthMeters", 0.75D, 0.1D, 50.0D);
+
     public static final ForgeConfigSpec.BooleanValue useEcoregionBiomes = BUILDER
             .comment("Ecoregion settings")
             .comment("Use WWF Terrestrial Ecoregions (TEOW) polygons for land biomes instead of the climate heuristic.")

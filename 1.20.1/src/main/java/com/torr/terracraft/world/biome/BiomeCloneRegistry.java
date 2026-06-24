@@ -50,11 +50,25 @@ public final class BiomeCloneRegistry
             ResourceKey<Biome> mapped = activeMap.get(ecoregion.ecoId());
             if (mapped != null)
             {
-                return mapped;
+                return refineClone(mapped, ecoregion);
             }
         }
 
-        return fallbackClone(ecoregion, latitude, longitude);
+        return refineClone(fallbackClone(ecoregion, latitude, longitude), ecoregion);
+    }
+
+    private static ResourceKey<Biome> refineClone(ResourceKey<Biome> clone, EcoregionInfo ecoregion)
+    {
+        String name = ecoregion.name();
+        if (name != null && name.toLowerCase().contains("mediterranean"))
+        {
+            return TerracraftBiomes.MEDITERRANEAN_SCRUB;
+        }
+        if (name != null && name.toLowerCase().contains("chaparral"))
+        {
+            return TerracraftBiomes.key("chaparral_nearctic");
+        }
+        return clone;
     }
 
     static ResourceKey<Biome> resolvePrimary(EcoregionInfo ecoregion, double latitude, double longitude, FloraPlacementMode mode)
@@ -76,6 +90,8 @@ public final class BiomeCloneRegistry
             case 7 -> TerracraftBiomes.key("savanna_" + realm);
             case 5, 6 -> TerracraftBiomes.key("taiga_" + realm);
             case 11 -> TerracraftBiomes.key("tundra_" + realm);
+            case 9 -> TerracraftBiomes.key("floodplain_meadow");
+            case 10 -> TerracraftBiomes.key("montane_meadow");
             case 13 -> TerracraftBiomes.key("semi_arid_scrub");
             case 14 -> TerracraftBiomes.key("mangrove_coastal");
             default -> realm.equals("neotropical") || realm.equals("nearctic")
@@ -90,13 +106,14 @@ public final class BiomeCloneRegistry
         {
             return switch (realm.trim())
             {
-                case "Nearctic" -> "nearctic";
-                case "Neotropical" -> "neotropical";
-                case "Afrotropical" -> "afrotropical";
-                case "Indo-Malayan" -> "indomalayan";
-                case "Australasian" -> "australasian";
-                case "Oceania" -> "oceania";
-                case "Antarctic" -> "antarctic";
+                case "Nearctic", "NA" -> "nearctic";
+                case "Neotropical", "NT" -> "neotropical";
+                case "Afrotropical", "AT" -> "afrotropical";
+                case "Indo-Malayan", "IM" -> "indomalayan";
+                case "Australasian", "AA" -> "australasian";
+                case "Oceania", "OC" -> "oceania";
+                case "Antarctic", "AN" -> "antarctic";
+                case "Palearctic", "PA" -> "palearctic";
                 default -> "palearctic";
             };
         }

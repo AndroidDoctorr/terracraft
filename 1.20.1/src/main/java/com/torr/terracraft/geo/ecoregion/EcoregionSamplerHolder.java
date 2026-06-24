@@ -22,4 +22,9 @@ public final class EcoregionSamplerHolder
     {
         sampler = StubEcoregionSampler.INSTANCE;
     }
+
+    public static boolean isStub()
+    {
+        return sampler instanceof StubEcoregionSampler;
+    }
 }

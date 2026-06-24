@@ -1,6 +1,7 @@
 {
   "commands.terracraft.tpll.success": "Teleported to %s, %s (elevation %s m, Y=%s)",
   "commands.terracraft.coords.success": "Position %s, %s, %s -> lat %s, lon %s, elev %s m | biome %s (classified %s) | ecoregion %s (id %s)",
+  "commands.terracraft.debuggen.success": "Heightmaps: WORLD_SURFACE_WG=%s MOTION_BLOCKING_NO_LEAVES=%s | possibleBiomes=%s | generateStructures=%s | chunkStatus=%s",
   "generator.terracraft.planet_earth": "Planet Earth",
   "world_preset.terracraft.planet_earth": "Planet Earth",
   "terracraft.create_world.flora_placement": "Flora",

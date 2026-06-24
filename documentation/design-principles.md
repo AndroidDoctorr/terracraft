@@ -77,6 +77,7 @@ Doable with Minecraft worldgen logic; would support “real Earth that **feels**
 
 | Idea | Why | Blocker |
 |------|-----|---------|
+| **Multi-scale elevation (Fourier / frequency split)** | `coastal_log` compresses large-scale relief but also squashes small features (Lake Merritt ~1 m, Grand Canyon walls at 1:4). Goal: compress **regional** trend while preserving **local** DEM contrast — e.g. treat each column's elevation as low-frequency baseline + high-frequency detail, compress only the baseline. | Needs profiling and tuning; not started |
 | **Geology-aware ores** | Realistic tin/copper/iron belts | Deposit maps or proxies; pairs with future **Ore placement** UI option |
 | **River network from DEM** | True riparian corridors | Derive channels from DEM flow accumulation — heavier than heuristics |
 | **Cubic Chunks / taller worlds** | Extreme mountains | No stable 1.20.1 Forge CC; datapack height extension documented in [elevation-scaling.md](elevation-scaling.md) |

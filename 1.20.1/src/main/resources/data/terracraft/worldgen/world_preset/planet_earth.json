@@ -8,7 +8,7 @@
           "type": "terracraft:earth",
           "seed": 0,
           "flora_placement": "historical",
-          "horizontal_scale": 100000,
+          "horizontal_scale": 25000,
           "elevation_mapping": "coastal_log",
           "ecoregion_border_blend_blocks": 64
         }

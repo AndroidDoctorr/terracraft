@@ -22,13 +22,21 @@ function Normalize-Realm([string]$realm) {
     if ([string]::IsNullOrWhiteSpace($realm)) { return "palearctic" }
     switch ($realm.Trim()) {
         "Nearctic" { return "nearctic" }
+        "NA" { return "nearctic" }
         "Palearctic" { return "palearctic" }
+        "PA" { return "palearctic" }
         "Neotropical" { return "neotropical" }
+        "NT" { return "neotropical" }
         "Afrotropical" { return "afrotropical" }
+        "AT" { return "afrotropical" }
         "Indo-Malayan" { return "indomalayan" }
+        "IM" { return "indomalayan" }
         "Australasian" { return "australasian" }
+        "AA" { return "australasian" }
         "Oceania" { return "oceania" }
+        "OC" { return "oceania" }
         "Antarctic" { return "antarctic" }
+        "AN" { return "antarctic" }
         default { return ($realm.ToLower() -replace '[^a-z]', '') }
     }
 }
@@ -93,6 +101,11 @@ $biomeFlora = @{}
 $nameOverrides = @(
     @{ substring = "California interior chaparral"; clone = "terracraft:chaparral_nearctic" }
     @{ substring = "Mediterranean"; clone = "terracraft:mediterranean_scrub" }
+    @{ substring = "Colorado Plateau"; clone = "terracraft:semi_arid_scrub" }
+    @{ substring = "Sonoran"; clone = "terracraft:semi_arid_scrub" }
+    @{ substring = "Mojave"; clone = "terracraft:semi_arid_scrub" }
+    @{ substring = "Arizona"; clone = "terracraft:semi_arid_scrub" }
+    @{ substring = "Great Basin"; clone = "terracraft:semi_arid_scrub" }
 )
 
 foreach ($feature in $geo.features) {

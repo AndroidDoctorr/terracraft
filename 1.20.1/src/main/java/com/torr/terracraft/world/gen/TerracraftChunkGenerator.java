@@ -3,9 +3,12 @@ package com.torr.terracraft.world.gen;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.torr.terracraft.config.TerracraftConfig;
+import com.torr.terracraft.geo.ChunkElevationField;
 import com.torr.terracraft.geo.ChunkGeoPrefetch;
 import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
+import com.torr.terracraft.world.PlanetEarthSettingsHelper;
+import com.torr.terracraft.world.gen.TerracraftBiomeSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -13,6 +16,7 @@ import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
@@ -25,6 +29,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -32,9 +37,13 @@ import java.util.concurrent.Executor;
 
 public class TerracraftChunkGenerator extends ChunkGenerator
 {
-    private static final Set<Heightmap.Types> TERRAIN_HEIGHTMAPS = Set.of(
+    private static final Set<Heightmap.Types> TERRAIN_HEIGHTMAPS = EnumSet.of(
+            Heightmap.Types.OCEAN_FLOOR,
             Heightmap.Types.OCEAN_FLOOR_WG,
-            Heightmap.Types.WORLD_SURFACE_WG
+            Heightmap.Types.WORLD_SURFACE,
+            Heightmap.Types.WORLD_SURFACE_WG,
+            Heightmap.Types.MOTION_BLOCKING,
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES
     );
 
     public static final Codec<TerracraftChunkGenerator> CODEC = RecordCodecBuilder.create(instance ->
@@ -57,6 +66,14 @@ public class TerracraftChunkGenerator extends ChunkGenerator
     @Override
     public void buildSurface(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess chunk)
     {
+        primeTerrainHeightmaps(chunk);
+    }
+
+    @Override
+    public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager)
+    {
+        primeTerrainHeightmaps(chunk);
+        super.applyBiomeDecoration(level, chunk, structureManager);
     }
 
     @Override
@@ -70,11 +87,25 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                                                         StructureManager structureManager, ChunkAccess chunk)
     {
         return CompletableFuture.supplyAsync(() -> {
+            syncWorldSettings();
             ChunkGeoPrefetch.prefetch(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ());
             fillTerrain(chunk, randomState);
-            Heightmap.primeHeightmaps(chunk, TERRAIN_HEIGHTMAPS);
+            primeTerrainHeightmaps(chunk);
             return chunk;
         }, executor);
+    }
+
+    private void syncWorldSettings()
+    {
+        if (getBiomeSource() instanceof TerracraftBiomeSource source)
+        {
+            PlanetEarthSettingsHelper.syncFromBiomeSource(source);
+        }
+    }
+
+    private static void primeTerrainHeightmaps(ChunkAccess chunk)
+    {
+        Heightmap.primeHeightmaps(chunk, TERRAIN_HEIGHTMAPS);
     }
 
     private void fillTerrain(ChunkAccess chunk, RandomState randomState)
@@ -86,6 +117,7 @@ public class TerracraftChunkGenerator extends ChunkGenerator
         int maxY = chunk.getMaxBuildHeight() - 1;
         double seaLevelMeters = TerracraftConfig.seaLevelMeters.get();
         int seaLevelBlockY = TerracraftConfig.seaLevelBlockY.get();
+        ChunkElevationField field = ChunkElevationField.sample(chunkMinX, chunkMinZ);
 
         for (int localX = 0; localX < 16; localX++)
         {
@@ -93,10 +125,10 @@ public class TerracraftChunkGenerator extends ChunkGenerator
             {
                 int worldX = chunkMinX + localX;
                 int worldZ = chunkMinZ + localZ;
-                double latitude = EarthProjection.blockZToLatitude(worldZ);
-                double longitude = EarthProjection.blockXToLongitude(worldX);
-                double elevationMeters = ElevationSamplerHolder.get().sampleElevationMeters(latitude, longitude);
-                int surfaceY = EarthProjection.elevationMetersToBlockY(elevationMeters);
+                double elevationMeters = field.centerMeters(localX, localZ);
+                int surfaceY = field.surfaceBlockY(localX, localZ);
+                int lakeSurfaceY = field.lakeSurfaceBlockY(localX, localZ);
+                boolean inlandLake = lakeSurfaceY != Integer.MIN_VALUE;
                 Holder<Biome> biome = getBiomeSource().getNoiseBiome(
                         QuartPos.fromBlock(worldX),
                         QuartPos.fromBlock(surfaceY),
@@ -107,23 +139,45 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                 for (int y = minY; y <= maxY; y++)
                 {
                     pos.set(worldX, y, worldZ);
-                    chunk.setBlockState(pos, terrainBlock(biome, elevationMeters, seaLevelMeters, seaLevelBlockY, y, surfaceY), false);
+                    BlockState state = terrainBlock(
+                            biome,
+                            elevationMeters,
+                            seaLevelMeters,
+                            seaLevelBlockY,
+                            y,
+                            surfaceY,
+                            inlandLake,
+                            lakeSurfaceY
+                    );
+                    boolean notify = y == surfaceY;
+                    chunk.setBlockState(pos, state, notify);
                 }
             }
         }
     }
 
     private static BlockState terrainBlock(Holder<Biome> biome, double elevationMeters, double seaLevelMeters,
-                                           int seaLevelBlockY, int y, int surfaceY)
+                                           int seaLevelBlockY, int y, int surfaceY, boolean inlandLake,
+                                           int lakeSurfaceY)
     {
         if (y > surfaceY)
         {
-            return y <= seaLevelBlockY && elevationMeters <= seaLevelMeters
-                    ? Blocks.WATER.defaultBlockState()
-                    : Blocks.AIR.defaultBlockState();
+            if (inlandLake && y <= lakeSurfaceY)
+            {
+                return Blocks.WATER.defaultBlockState();
+            }
+            if (!inlandLake && y <= seaLevelBlockY && elevationMeters <= seaLevelMeters)
+            {
+                return Blocks.WATER.defaultBlockState();
+            }
+            return Blocks.AIR.defaultBlockState();
         }
         if (y == surfaceY)
         {
+            if (inlandLake && lakeSurfaceY > surfaceY)
+            {
+                return Blocks.WATER.defaultBlockState();
+            }
             return BiomeSurfaceRules.surfaceBlock(
                     biome,
                     elevationMeters,

@@ -1,10 +1,14 @@
 package com.torr.terracraft.geo;
 
+import com.torr.terracraft.config.FloraPlacementMode;
 import com.torr.terracraft.config.FloraPlacementHolder;
 import com.torr.terracraft.config.TerracraftConfig;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.biome.BiomeCloneRegistry;
+import com.torr.terracraft.world.biome.GeographicBiomeFallback;
+import com.torr.terracraft.world.biome.TerracraftBiomes;
+import com.torr.terracraft.world.biome.TerracraftClimateMapper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
@@ -16,6 +20,11 @@ public final class BiomePlacement
     }
 
     public static ResourceKey<Biome> classify(double latitude, double longitude, double elevationMeters)
+    {
+        return classify(latitude, longitude, elevationMeters, FloraPlacementHolder.get());
+    }
+
+    public static ResourceKey<Biome> classify(double latitude, double longitude, double elevationMeters, FloraPlacementMode floraMode)
     {
         ResourceKey<Biome> elevationBiome = elevationOverride(latitude, longitude, elevationMeters);
         if (elevationBiome != null)
@@ -32,17 +41,24 @@ public final class BiomePlacement
                         ecoregion,
                         latitude,
                         longitude,
-                        FloraPlacementHolder.get()
+                        floraMode
                 );
             }
         }
 
-        if (TerracraftConfig.useClimateFallback.get())
+        java.util.Optional<ResourceKey<Biome>> geographic = GeographicBiomeFallback.at(latitude, longitude, elevationMeters);
+        if (geographic.isPresent())
         {
-            return ClimateClassifier.classifyLand(latitude, longitude, elevationMeters);
+            return geographic.get();
         }
 
-        return Biomes.PLAINS;
+        if (TerracraftConfig.useClimateFallback.get())
+        {
+            ResourceKey<Biome> climateBiome = ClimateClassifier.classifyLand(latitude, longitude, elevationMeters);
+            return TerracraftClimateMapper.toTerracraftLandBiome(climateBiome, latitude, longitude);
+        }
+
+        return TerracraftBiomes.PLAINS_PALEARCTIC;
     }
 
     private static ResourceKey<Biome> elevationOverride(double latitude, double longitude, double elevationMeters)

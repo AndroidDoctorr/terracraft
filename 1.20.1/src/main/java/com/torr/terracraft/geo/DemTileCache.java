@@ -1,5 +1,6 @@
 package com.torr.terracraft.geo;
 
+import com.torr.terracraft.config.TerracraftConfig;
 import com.torr.terracraft.terracraft;
 import net.minecraft.Util;
 
@@ -53,9 +54,42 @@ public final class DemTileCache
 
     public double sample(int zoom, double latitude, double longitude)
     {
+        if (TerracraftConfig.demBilinearSampling.get())
+        {
+            return sampleBilinear(zoom, latitude, longitude);
+        }
+
         TerrariumTileMath.TileSample sample = TerrariumTileMath.locate(zoom, latitude, longitude);
         double[][] heights = getTileHeights(zoom, sample.tileX(), sample.tileY());
         return heights[sample.pixelX()][sample.pixelY()];
+    }
+
+    private double sampleBilinear(int zoom, double latitude, double longitude)
+    {
+        double worldX = TerrariumTileMath.worldPixelX(longitude, zoom);
+        double worldY = TerrariumTileMath.worldPixelY(latitude, zoom);
+        int x0 = (int) Math.floor(worldX);
+        int y0 = (int) Math.floor(worldY);
+        double tx = worldX - x0;
+        double ty = worldY - y0;
+
+        double h00 = sampleWorldPixel(zoom, x0, y0);
+        double h10 = sampleWorldPixel(zoom, x0 + 1, y0);
+        double h01 = sampleWorldPixel(zoom, x0, y0 + 1);
+        double h11 = sampleWorldPixel(zoom, x0 + 1, y0 + 1);
+        double top = h00 + tx * (h10 - h00);
+        double bottom = h01 + tx * (h11 - h01);
+        return top + ty * (bottom - top);
+    }
+
+    private double sampleWorldPixel(int zoom, int worldPixelX, int worldPixelY)
+    {
+        int tileX = Math.floorDiv(worldPixelX, 256);
+        int tileY = Math.floorDiv(worldPixelY, 256);
+        int pixelX = Math.floorMod(worldPixelX, 256);
+        int pixelY = Math.floorMod(worldPixelY, 256);
+        double[][] heights = getTileHeights(zoom, tileX, tileY);
+        return heights[pixelX][pixelY];
     }
 
     public Path cacheRoot()
@@ -96,7 +130,8 @@ public final class DemTileCache
             return cached;
         }
 
-        return startTileLoad(key).join();
+        double[][] loaded = startTileLoad(key).join();
+        return loaded != null ? loaded : flatTile();
     }
 
     private CompletableFuture<double[][]> startTileLoad(TileKey key)
@@ -140,13 +175,13 @@ public final class DemTileCache
         catch (IOException exception)
         {
             terracraft.LOGGER.warn("Failed to load DEM tile {}/{}/{}: {}", key.zoom(), key.tileX(), key.tileY(), exception.toString());
-            return flatTile();
+            return null;
         }
         catch (InterruptedException exception)
         {
             Thread.currentThread().interrupt();
             terracraft.LOGGER.warn("Interrupted while loading DEM tile {}/{}/{}", key.zoom(), key.tileX(), key.tileY());
-            return flatTile();
+            return null;
         }
     }
 

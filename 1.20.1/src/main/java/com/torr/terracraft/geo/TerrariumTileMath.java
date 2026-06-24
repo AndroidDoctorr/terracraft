@@ -80,16 +80,25 @@ public final class TerrariumTileMath
 
     public static int longitudeToPixelX(double longitude, int zoom, int tileX)
     {
-        double worldPixels = (1 << zoom) * 256.0D;
-        return (int) Math.floor((longitude + 180.0D) / 360.0D * worldPixels) - tileX * 256;
+        return (int) Math.floor(worldPixelX(longitude, zoom)) - tileX * 256;
     }
 
     public static int latitudeToPixelY(double latitude, int zoom, int tileY)
     {
+        return (int) Math.floor(worldPixelY(latitude, zoom)) - tileY * 256;
+    }
+
+    public static double worldPixelX(double longitude, int zoom)
+    {
+        double worldPixels = (1 << zoom) * 256.0D;
+        return (longitude + 180.0D) / 360.0D * worldPixels;
+    }
+
+    public static double worldPixelY(double latitude, int zoom)
+    {
         double latRadians = Math.toRadians(clampLatitude(latitude));
         double worldPixels = (1 << zoom) * 256.0D;
-        double worldY = (1.0D - Math.log(Math.tan(latRadians) + 1.0D / Math.cos(latRadians)) / Math.PI) / 2.0D * worldPixels;
-        return (int) Math.floor(worldY) - tileY * 256;
+        return (1.0D - Math.log(Math.tan(latRadians) + 1.0D / Math.cos(latRadians)) / Math.PI) / 2.0D * worldPixels;
     }
 
     private static int clampPixel(int pixel)

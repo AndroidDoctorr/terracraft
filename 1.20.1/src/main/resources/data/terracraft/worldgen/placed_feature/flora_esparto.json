@@ -1,0 +1,1 @@
+{"feature":"materia:esparto_patch","placement":[{"count":3,"type":"minecraft:count"},{"type":"minecraft:rarity_filter","chance":4},{"type":"minecraft:in_square"},{"type":"minecraft:heightmap","heightmap":"MOTION_BLOCKING_NO_LEAVES"},{"type":"minecraft:biome"}]}
