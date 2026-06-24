@@ -5,6 +5,7 @@ import com.torr.terracraft.geo.DemTileCache;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.StubElevationSampler;
 import com.torr.terracraft.geo.TerrariumElevationSampler;
+import com.torr.terracraft.geo.TerrainElevationMapper;
 import com.torr.terracraft.geo.ecoregion.CachedEcoregionSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.geo.ecoregion.EcoregionTileCache;
@@ -55,11 +56,26 @@ public final class TerracraftBootstrap
                 TerracraftConfig.demTileUrlTemplate.get(),
                 TerracraftConfig.demDownloadThreads.get()
         );
-        ElevationSamplerHolder.set(new TerrariumElevationSampler(demTileCache, TerracraftConfig.demZoom.get()));
-        terracraft.LOGGER.info("Terracraft elevation: AWS Terrarium tiles (zoom {}, cache {}), mapping {}",
-                TerracraftConfig.demZoom.get(),
-                cacheRoot.toAbsolutePath(),
-                TerracraftConfig.elevationMapping.get());
+        int zoom = TerracraftConfig.demZoom.get();
+        ElevationSamplerHolder.set(new TerrariumElevationSampler(demTileCache, zoom));
+        if (TerrainElevationMapper.isEnabled())
+        {
+            int baselineZoom = TerrariumElevationSampler.baselineZoomFor(zoom);
+            terracraft.LOGGER.info(
+                    "Terracraft elevation: Terrarium z{} (baseline z{}), high-pass detail scale {}, cache {}",
+                    zoom,
+                    baselineZoom,
+                    TerracraftConfig.elevationDetailVerticalScale.get(),
+                    cacheRoot.toAbsolutePath()
+            );
+        }
+        else
+        {
+            terracraft.LOGGER.info("Terracraft elevation: AWS Terrarium tiles (zoom {}, cache {}), mapping {}",
+                    zoom,
+                    cacheRoot.toAbsolutePath(),
+                    TerracraftConfig.elevationMapping.get());
+        }
     }
 
     public static void initEcoregionSampler()

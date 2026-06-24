@@ -10,11 +10,15 @@ public final class ChunkElevationField
 {
     private static final int GRID_SIZE = 18;
 
+    private final int chunkMinX;
+    private final int chunkMinZ;
     private final double[][] meters;
     private final double seaLevelMeters;
 
-    private ChunkElevationField(double[][] meters, double seaLevelMeters)
+    private ChunkElevationField(int chunkMinX, int chunkMinZ, double[][] meters, double seaLevelMeters)
     {
+        this.chunkMinX = chunkMinX;
+        this.chunkMinZ = chunkMinZ;
         this.meters = meters;
         this.seaLevelMeters = seaLevelMeters;
     }
@@ -37,7 +41,7 @@ public final class ChunkElevationField
             }
         }
 
-        return new ChunkElevationField(grid, seaLevelMeters);
+        return new ChunkElevationField(chunkMinX, chunkMinZ, grid, seaLevelMeters);
     }
 
     public double centerMeters(int localX, int localZ)
@@ -47,7 +51,10 @@ public final class ChunkElevationField
 
     public int surfaceBlockY(int localX, int localZ)
     {
-        return EarthProjection.elevationMetersToBlockY(centerMeters(localX, localZ));
+        double rawMeters = centerMeters(localX, localZ);
+        double latitude = EarthProjection.blockZToLatitude(chunkMinZ + localZ);
+        double longitude = EarthProjection.blockXToLongitude(chunkMinX + localX);
+        return TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, rawMeters);
     }
 
     public double spillMeters(int localX, int localZ)
@@ -77,6 +84,10 @@ public final class ChunkElevationField
         {
             return Integer.MIN_VALUE;
         }
-        return EarthProjection.elevationMetersToBlockY(spillMeters(localX, localZ));
+
+        double spillRawMeters = spillMeters(localX, localZ);
+        double latitude = EarthProjection.blockZToLatitude(chunkMinZ + localZ);
+        double longitude = EarthProjection.blockXToLongitude(chunkMinX + localX);
+        return TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, spillRawMeters);
     }
 }

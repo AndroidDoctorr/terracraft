@@ -8,7 +8,10 @@ import com.torr.terracraft.config.HorizontalScaleOption;
 import com.torr.terracraft.geo.BiomePlacement;
 import com.torr.terracraft.geo.BlockGeoTarget;
 import com.torr.terracraft.geo.EarthProjection;
+import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.GeoCoordinate;
+import com.torr.terracraft.geo.TerrainElevationMapper;
+import com.torr.terracraft.geo.TerrariumElevationSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
@@ -139,6 +142,20 @@ public final class TerracraftCommands
                 floraMode.configValue(),
                 EcoregionSamplerHolder.isStub() ? "STUB (run tools/download_ecoregions.ps1)" : "loaded"
         )), false);
+        if (TerrainElevationMapper.isEnabled()
+                && ElevationSamplerHolder.get() instanceof TerrariumElevationSampler terrarium)
+        {
+            double rawMeters = geo.elevationMeters();
+            double baselineMeters = terrarium.sampleBaselineMeters(geo.latitude(), geo.longitude());
+            int terrainY = TerrainElevationMapper.toBlockY(rawMeters, baselineMeters);
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Terrain DEM: raw %.1f m, baseline %.1f m, detail %+.1f m → mapped Y %d",
+                    rawMeters,
+                    baselineMeters,
+                    rawMeters - baselineMeters,
+                    terrainY
+            )), false);
+        }
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))
         {
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,

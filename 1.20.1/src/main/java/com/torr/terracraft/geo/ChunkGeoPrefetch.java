@@ -4,6 +4,7 @@ import com.torr.terracraft.config.PlanetEarthSettingsHolder;
 import com.torr.terracraft.geo.ecoregion.CachedEcoregionSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
+import com.torr.terracraft.geo.TerrainElevationMapper;
 
 /**
  * Loads DEM and ecoregion tiles for a chunk footprint before per-column sampling so
@@ -41,6 +42,10 @@ public final class ChunkGeoPrefetch
         if (sampler instanceof TerrariumElevationSampler terrarium)
         {
             terrarium.cache().prefetchArea(terrarium.zoom(), minLat, maxLat, minLon, maxLon);
+            if (TerrainElevationMapper.isEnabled())
+            {
+                terrarium.cache().prefetchArea(terrarium.baselineZoom(), minLat, maxLat, minLon, maxLon);
+            }
         }
     }
 

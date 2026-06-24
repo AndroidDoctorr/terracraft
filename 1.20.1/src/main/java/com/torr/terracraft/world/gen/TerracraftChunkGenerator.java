@@ -7,6 +7,7 @@ import com.torr.terracraft.geo.ChunkElevationField;
 import com.torr.terracraft.geo.ChunkGeoPrefetch;
 import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
+import com.torr.terracraft.geo.TerrainElevationMapper;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
 import net.minecraft.core.BlockPos;
@@ -194,7 +195,7 @@ public class TerracraftChunkGenerator extends ChunkGenerator
         double latitude = EarthProjection.blockZToLatitude(z);
         double longitude = EarthProjection.blockXToLongitude(x);
         double elevationMeters = ElevationSamplerHolder.get().sampleElevationMeters(latitude, longitude);
-        return EarthProjection.elevationMetersToBlockY(elevationMeters);
+        return TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, elevationMeters);
     }
 
     @Override

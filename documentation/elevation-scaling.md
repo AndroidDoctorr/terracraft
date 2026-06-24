@@ -44,6 +44,37 @@ Compare to old linear 0.05: Berkeley ≈ Y 83, barely noticeable.
 
 **Important:** Existing worlds keep already-generated chunks. Create a **new Planet Earth world** (or explore new chunks) after changing mapping.
 
+## High-pass terrain (Sprint 1)
+
+When `elevationHighPassEnabled = true` (default), Terracraft splits the DEM into two layers:
+
+| Layer | Source | Vertical mapping |
+|-------|--------|------------------|
+| **Baseline** | Coarser Terrarium zoom (`demZoom - demBaselineZoomOffset`) | `coastal_log` / `linear` — regional hills and mountains |
+| **Detail** | `raw - baseline` at full-res zoom | `elevationDetailVerticalScale` blocks per meter (default 0.25) |
+
+Example at defaults (`demZoom = 12`, offset `2` → baseline zoom 10):
+
+- Regional plateau trend follows ~160 m DEM pixels (compressed with coastal_log).
+- Canyon rims, lake basins, and bluffs keep local contrast at ~40 m pixel resolution.
+
+### Config (terrain section in `terracraft-common.toml`)
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `demBilinearSampling` | `true` | Bilinear interpolation between DEM pixels |
+| `elevationHighPassEnabled` | `true` | Enable baseline + detail split |
+| `demBaselineZoomOffset` | `2` | Baseline zoom = demZoom minus this (min 8) |
+| `elevationDetailVerticalScale` | `0.25` | Blocks per meter for local detail |
+| `elevationDetailMaxAbsMeters` | `0` | Clamp detail spikes (0 = off) |
+
+### Tuning tips
+
+- **Canyons/walls still too soft:** raise `elevationDetailVerticalScale` (try `0.35`–`0.5`) or lower `demBaselineZoomOffset` to `1`.
+- **Terrain too spiky / noisy:** set `elevationDetailMaxAbsMeters` to `150`–`300`.
+- **Mountains too tall overall:** lower `coastalVerticalScale` (baseline), not detail scale.
+- **Revert to old single-layer mapping:** `elevationHighPassEnabled = false`.
+
 ## Extending vertical space (optional)
 
 Vanilla Planet Earth uses `min_y: -64`, `height: 384` (Y up to 320). You do **not** need a mod to go a bit taller — edit the datapack dimension type:

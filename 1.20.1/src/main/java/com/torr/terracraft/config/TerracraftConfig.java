@@ -68,6 +68,23 @@ public final class TerracraftConfig
             .comment("Smooth terrain by bilinear-interpolating DEM pixels instead of nearest-neighbor column sampling.")
             .define("demBilinearSampling", true);
 
+    public static final ForgeConfigSpec.BooleanValue elevationHighPassEnabled = BUILDER
+            .comment("Terrain height mapping")
+            .comment("Split DEM into regional baseline (coarser zoom, coastal_log) + local detail (near-real vertical scale).")
+            .define("elevationHighPassEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue demBaselineZoomOffset = BUILDER
+            .comment("Baseline DEM is sampled at demZoom minus this offset (min zoom 8). 2 ≈ 4× coarser regional trend.")
+            .defineInRange("demBaselineZoomOffset", 2, 1, 4);
+
+    public static final ForgeConfigSpec.DoubleValue elevationDetailVerticalScale = BUILDER
+            .comment("Blocks per meter applied to local elevation detail (raw minus baseline). Default matches coastalVerticalScale.")
+            .defineInRange("elevationDetailVerticalScale", 0.25D, 0.0D, 2.0D);
+
+    public static final ForgeConfigSpec.DoubleValue elevationDetailMaxAbsMeters = BUILDER
+            .comment("Clamp |raw - baseline| before detail scaling (0 = disabled). Reduces spikes from noisy DEM.")
+            .defineInRange("elevationDetailMaxAbsMeters", 0.0D, 0.0D, 2000.0D);
+
     public static final ForgeConfigSpec.DoubleValue depressionMinDepthMeters = BUILDER
             .comment("Minimum real-world depth (meters) below the local spill elevation to classify a cell as an inland lake basin.")
             .defineInRange("depressionMinDepthMeters", 0.75D, 0.1D, 50.0D);
