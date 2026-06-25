@@ -17,6 +17,8 @@ import com.torr.terracraft.geo.TerrariumElevationSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
+import com.torr.terracraft.world.biome.BiomeVariantPicker;
+import com.torr.terracraft.world.biome.BiomeVariantProfile;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
 import com.torr.terracraft.world.gen.WaterColumnPlan;
 import net.minecraft.commands.CommandSourceStack;
@@ -177,6 +179,18 @@ public final class TerracraftCommands
                 field.adjacentToWater(localX, localZ) ? "yes" : "no",
                 maxSlope
         )), false);
+        if (TerracraftConfig.biomeVariantsEnabled.get())
+        {
+            BlockPos pos = player.blockPosition();
+            BiomeVariantProfile variant = BiomeVariantPicker.pick(level.getSeed(), pos.getX(), pos.getZ());
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Variant: %s, tree density %.2f, clearing %s, wetland %s",
+                    variant.id(),
+                    variant.treeDensity(),
+                    variant.clearing() ? "yes" : "no",
+                    variant.wetland() ? "yes" : "no"
+            )), false);
+        }
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))
         {
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,

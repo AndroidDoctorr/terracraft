@@ -146,6 +146,27 @@ public final class TerracraftConfig
             .comment("Extra blocks allowed above direct coastal_log mapping when clamping low elevations.")
             .defineInRange("coastalTerrainClampBlockMargin", 3, 0, 32);
 
+    public static final ForgeConfigSpec.BooleanValue biomeVariantsEnabled = BUILDER
+            .comment("Biome variation")
+            .comment("Enable patch-scale biome variant profiles (tree density, clearings, wetland pockets).")
+            .define("biomeVariantsEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue variationPatchScaleBlocks = BUILDER
+            .comment("Size of variant patches in blocks (power of two recommended, default 128).")
+            .defineInRange("variationPatchScaleBlocks", 128, 32, 512);
+
+    public static final ForgeConfigSpec.DoubleValue variantElevationFalloffMeters = BUILDER
+            .comment("Real elevation span over which tree density falls from lowland boost to upland reduction.")
+            .defineInRange("variantElevationFalloffMeters", 700.0D, 50.0D, 3000.0D);
+
+    public static final ForgeConfigSpec.DoubleValue variantLowElevationTreeBoost = BUILDER
+            .comment("Tree density multiplier in valleys and low coastal land.")
+            .defineInRange("variantLowElevationTreeBoost", 1.15D, 0.1D, 3.0D);
+
+    public static final ForgeConfigSpec.DoubleValue variantHighElevationTreeScale = BUILDER
+            .comment("Tree density multiplier on high slopes within the falloff band.")
+            .defineInRange("variantHighElevationTreeScale", 0.35D, 0.0D, 2.0D);
+
     public static final ForgeConfigSpec.BooleanValue useEcoregionBiomes = BUILDER
             .comment("Ecoregion settings")
             .comment("Use WWF Terrestrial Ecoregions (TEOW) polygons for land biomes instead of the climate heuristic.")

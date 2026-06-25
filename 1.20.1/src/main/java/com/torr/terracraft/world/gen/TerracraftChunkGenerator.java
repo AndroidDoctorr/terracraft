@@ -9,6 +9,7 @@ import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.TerrainElevationMapper;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
+import com.torr.terracraft.world.biome.BiomeVariantDecorator;
 import com.torr.terracraft.world.gen.ShorelineSurface;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
 import com.torr.terracraft.world.gen.WaterColumnPlan;
@@ -75,8 +76,11 @@ public class TerracraftChunkGenerator extends ChunkGenerator
     @Override
     public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager)
     {
+        syncWorldSettings();
         primeTerrainHeightmaps(chunk);
         super.applyBiomeDecoration(level, chunk, structureManager);
+        long worldSeed = level.getSeed();
+        BiomeVariantDecorator.apply(level, chunk, worldSeed, level.getLevel().getChunkSource().getGenerator());
     }
 
     @Override
