@@ -12,6 +12,7 @@ import com.torr.terracraft.geo.ecoregion.EcoregionTileCache;
 import com.torr.terracraft.geo.ecoregion.WwfEcoregionDataset;
 import com.torr.terracraft.geo.ecoregion.WwfEcoregionDownloader;
 import com.torr.terracraft.world.biome.BiomeCloneRegistry;
+import com.torr.terracraft.world.biome.BiomeTransitionRegistry;
 import com.torr.terracraft.world.biome.BiomeVariantRegistry;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -38,6 +39,7 @@ public final class TerracraftBootstrap
         {
             BiomeCloneRegistry.load();
             BiomeVariantRegistry.load();
+            BiomeTransitionRegistry.load();
             initElevationSampler();
             initEcoregionSampler();
         });

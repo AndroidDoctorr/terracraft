@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 public class TerracraftBiomeSource extends BiomeSource
 {
     public static final double DEFAULT_HORIZONTAL_SCALE = 100_000.0D;
-    public static final int DEFAULT_BORDER_BLEND_BLOCKS = 64;
+    public static final int DEFAULT_BORDER_BLEND_BLOCKS = 96;
 
     public static final Codec<TerracraftBiomeSource> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
@@ -199,7 +199,8 @@ public class TerracraftBiomeSource extends BiomeSource
                     longitude,
                     ecoregion,
                     biomeKey,
-                    floraPlacement
+                    floraPlacement,
+                    elevationMeters
             );
         }
 

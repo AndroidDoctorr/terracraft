@@ -2,15 +2,14 @@ package com.torr.terracraft.world.biome;
 
 import com.torr.terracraft.config.FloraPlacementMode;
 import com.torr.terracraft.config.PlanetEarthSettingsHolder;
-import com.torr.terracraft.geo.EarthProjection;
+import com.torr.terracraft.config.TerracraftConfig;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
-import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 
 /**
- * Vegetation spillover at ecoregion borders — picks a neighbor clone inside a buffer band
- * so biome edges soften without hard walls.
+ * Softens ecoregion borders with distance-weighted spillover, dedicated transition clones,
+ * and rain-shadow biome nudges.
  */
 public final class BiomeTransition
 {
@@ -26,79 +25,89 @@ public final class BiomeTransition
             double longitude,
             EcoregionInfo centerEcoregion,
             ResourceKey<Biome> centerBiome,
-            FloraPlacementMode floraMode
+            FloraPlacementMode floraMode,
+            double elevationMeters
     )
     {
-        int blendBlocks = PlanetEarthSettingsHolder.ecoregionBorderBlendBlocks();
-        if (blendBlocks <= 0 || centerEcoregion.ecoId() == 0)
+        ResourceKey<Biome> resolved = centerBiome;
+
+        if (TerracraftConfig.ecoregionBorderBlendEnabled.get() && centerEcoregion.ecoId() != 0)
         {
-            return centerBiome;
+            resolved = applyBorderBlend(
+                    worldSeed,
+                    blockX,
+                    blockZ,
+                    latitude,
+                    longitude,
+                    centerEcoregion,
+                    centerBiome,
+                    floraMode
+            );
         }
 
-        double degreeStep = blendBlocks / EarthProjection.blocksPerDegree();
-        EcoregionInfo north = EcoregionSamplerHolder.get().sample(latitude + degreeStep, longitude);
-        EcoregionInfo south = EcoregionSamplerHolder.get().sample(latitude - degreeStep, longitude);
-        EcoregionInfo east = EcoregionSamplerHolder.get().sample(latitude, longitude + degreeStep);
-        EcoregionInfo west = EcoregionSamplerHolder.get().sample(latitude, longitude - degreeStep);
-
-        EcoregionInfo spillSource = pickSpillSource(worldSeed, blockX, blockZ, centerEcoregion, north, south, east, west);
-        if (spillSource == null)
-        {
-            return centerBiome;
-        }
-
-        double spillRoll = transitionHash(worldSeed, blockX, blockZ);
-        if (spillRoll > 0.42D)
-        {
-            return centerBiome;
-        }
-
-        ResourceKey<Biome> neighborBiome = BiomeCloneRegistry.resolvePrimary(spillSource, latitude, longitude, floraMode);
-        return neighborBiome.equals(centerBiome) ? centerBiome : neighborBiome;
+        return RainShadowPlacement.apply(resolved, latitude, longitude, elevationMeters);
     }
 
-    private static EcoregionInfo pickSpillSource(
+    private static ResourceKey<Biome> applyBorderBlend(
             long worldSeed,
             int blockX,
             int blockZ,
-            EcoregionInfo center,
-            EcoregionInfo north,
-            EcoregionInfo south,
-            EcoregionInfo east,
-            EcoregionInfo west
+            double latitude,
+            double longitude,
+            EcoregionInfo centerEcoregion,
+            ResourceKey<Biome> centerBiome,
+            FloraPlacementMode floraMode
     )
     {
-        EcoregionInfo[] candidates = {north, south, east, west};
-        int count = 0;
-        for (EcoregionInfo sample : candidates)
+        EcoregionBorderSampler.BorderSample border = EcoregionBorderSampler.sample(
+                blockX,
+                blockZ,
+                latitude,
+                longitude,
+                centerEcoregion
+        );
+        if (!border.isBorder())
         {
-            if (sample.ecoId() != 0 && sample.ecoId() != center.ecoId())
-            {
-                count++;
-            }
-        }
-        if (count == 0)
-        {
-            return null;
+            return centerBiome;
         }
 
-        double pick = transitionHash(worldSeed, blockX + 17, blockZ + 31);
-        int target = (int) (pick * count);
-        for (EcoregionInfo sample : candidates)
+        ResourceKey<Biome> neighborBiome = BiomeCloneRegistry.resolvePrimary(
+                border.neighborEcoregion(),
+                latitude,
+                longitude,
+                floraMode
+        );
+        if (neighborBiome.equals(centerBiome))
         {
-            if (sample.ecoId() != 0 && sample.ecoId() != center.ecoId())
+            return centerBiome;
+        }
+
+        double roll = transitionHash(worldSeed, blockX, blockZ);
+        double spillChance = border.strength() * TerracraftConfig.ecoregionBorderSpillWeight.get();
+        if (roll > spillChance)
+        {
+            return centerBiome;
+        }
+
+        if (TerracraftConfig.ecoregionBorderTransitionEnabled.get())
+        {
+            BiomeArchetype centerArchetype = BiomeArchetype.fromBiome(centerBiome);
+            BiomeArchetype neighborArchetype = BiomeArchetype.fromBiome(neighborBiome);
+            ResourceKey<Biome> transition = BiomeTransitionRegistry.resolve(centerArchetype, neighborArchetype);
+            if (transition != null && TerracraftBiomes.isRegistered(transition))
             {
-                if (target == 0)
+                double transitionRoll = transitionHash(worldSeed, blockX + 29, blockZ + 53);
+                if (transitionRoll < border.strength() * 0.85D)
                 {
-                    return sample;
+                    return transition;
                 }
-                target--;
             }
         }
-        return null;
+
+        return neighborBiome;
     }
 
-    private static double transitionHash(long worldSeed, int blockX, int blockZ)
+    static double transitionHash(long worldSeed, int blockX, int blockZ)
     {
         long bits = worldSeed ^ (long) blockX * 734287L ^ (long) blockZ * 912271L;
         bits = bits ^ (bits >>> 33);

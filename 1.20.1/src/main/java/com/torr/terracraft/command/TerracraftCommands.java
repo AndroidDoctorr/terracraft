@@ -17,6 +17,8 @@ import com.torr.terracraft.geo.TerrariumElevationSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
+import com.torr.terracraft.world.biome.EcoregionBorderSampler;
+import com.torr.terracraft.world.biome.RainShadowPlacement;
 import com.torr.terracraft.world.biome.BiomeVariantPicker;
 import com.torr.terracraft.world.biome.BiomeVariantProfile;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
@@ -189,6 +191,32 @@ public final class TerracraftCommands
                     variant.treeDensity(),
                     variant.clearing() ? "yes" : "no",
                     variant.wetland() ? "yes" : "no"
+            )), false);
+        }
+        if (TerracraftConfig.ecoregionBorderBlendEnabled.get())
+        {
+            BlockPos pos = player.blockPosition();
+            EcoregionInfo centerEco = EcoregionSamplerHolder.get().sample(geo.latitude(), geo.longitude());
+            EcoregionBorderSampler.BorderSample border = EcoregionBorderSampler.sample(
+                    pos.getX(),
+                    pos.getZ(),
+                    geo.latitude(),
+                    geo.longitude(),
+                    centerEco
+            );
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Border: strength %.2f%s",
+                    border.strength(),
+                    border.isBorder()
+                            ? String.format(Locale.ROOT, ", neighbor %s (#%d)", border.neighborEcoregion().name(), border.neighborEcoregion().ecoId())
+                            : ""
+            )), false);
+        }
+        if (TerracraftConfig.rainShadowEnabled.get())
+        {
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Rain shadow: %s",
+                    RainShadowPlacement.isRainShadow(geo.latitude(), geo.longitude(), geo.elevationMeters()) ? "yes" : "no"
             )), false);
         }
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))

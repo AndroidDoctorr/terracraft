@@ -197,7 +197,36 @@ public final class TerracraftConfig
 
     public static final ForgeConfigSpec.IntValue ecoregionBorderBlendBlocks = BUILDER
             .comment("Width in blocks of ecoregion border buffer where neighbor vegetation can spill over (0 disables).")
-            .defineInRange("ecoregionBorderBlendBlocks", 64, 0, 512);
+            .defineInRange("ecoregionBorderBlendBlocks", 96, 0, 512);
+
+    public static final ForgeConfigSpec.BooleanValue ecoregionBorderBlendEnabled = BUILDER
+            .comment("Ecoregion border blending")
+            .comment("Enable distance-weighted neighbor biome spillover at ecoregion edges.")
+            .define("ecoregionBorderBlendEnabled", true);
+
+    public static final ForgeConfigSpec.BooleanValue ecoregionBorderTransitionEnabled = BUILDER
+            .comment("Use dedicated transition clones (montane_meadow, chaparral, etc.) in border bands.")
+            .define("ecoregionBorderTransitionEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue ecoregionBorderSpillWeight = BUILDER
+            .comment("Multiplier for border spill probability (higher = wider soft edges).")
+            .defineInRange("ecoregionBorderSpillWeight", 1.0D, 0.1D, 2.0D);
+
+    public static final ForgeConfigSpec.BooleanValue rainShadowEnabled = BUILDER
+            .comment("Nudge leeward basins toward semi-arid/chaparral clones when upwind terrain is high.")
+            .define("rainShadowEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue rainShadowSampleDegrees = BUILDER
+            .comment("Longitude offset (degrees) for rain-shadow upwind/downwind elevation samples.")
+            .defineInRange("rainShadowSampleDegrees", 0.08D, 0.01D, 1.0D);
+
+    public static final ForgeConfigSpec.DoubleValue rainShadowMinUpwindMeters = BUILDER
+            .comment("Minimum upwind elevation excess (meters) to classify rain shadow.")
+            .defineInRange("rainShadowMinUpwindMeters", 350.0D, 50.0D, 2000.0D);
+
+    public static final ForgeConfigSpec.DoubleValue rainShadowMaxElevationMeters = BUILDER
+            .comment("Do not apply rain-shadow nudges above this elevation (meters).")
+            .defineInRange("rainShadowMaxElevationMeters", 2200.0D, 200.0D, 5000.0D);
 
     public static final ForgeConfigSpec.ConfigValue<String> floraPlacementDefault = BUILDER
             .comment("Default flora placement for new worlds: historical (native ranges) or biome (climate-based, Materia-like).")

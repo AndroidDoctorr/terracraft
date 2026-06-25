@@ -589,6 +589,26 @@ Patch-scale variation within Terracraft clone biomes without adding new biome re
 
 ---
 
+## Sprint 4 — Ecoregion borders (shipped)
+
+Softens hard ecoregion polygon edges with distance-weighted blending, transition clones, and rain-shadow nudges.
+
+| Component | Path |
+|-----------|------|
+| Border sampler | `EcoregionBorderSampler` — 8-direction multi-distance edge strength |
+| Transition map | `data/terracraft/ecoregion/transition_palettes.json` |
+| Rain shadow | `RainShadowPlacement` — leeward semi-arid/chaparral bias |
+
+**Behavior:** Near ecoregion edges, spill probability scales with border strength. Common pairs (forest↔steppe, med↔semi-arid) use transition clones like `montane_meadow` or `chaparral_nearctic` instead of abrupt neighbor swaps. Rain-shadow zones nudge forest/plains toward `semi_arid_scrub`.
+
+**Config:** `ecoregionBorderBlendEnabled`, `ecoregionBorderBlendBlocks` (default 96), `ecoregionBorderTransitionEnabled`, `ecoregionBorderSpillWeight`, `rainShadowEnabled`, `rainShadowMinUpwindMeters`
+
+**Debug:** `/terracraft coords` shows border strength and rain-shadow status.
+
+**Test:** Walk ecoregion boundaries in Antioch foothills, Alps↔Mediterranean coast, Basin & Range (Nevada east of Sierra).
+
+---
+
 ## Implementation order (revised)
 
 ```
@@ -599,7 +619,7 @@ Phase 3  MateriaBridge (historical + biome JSON tables, soft dep)
 Phase 4  Biome variant profiles (density, clearings) — **shipped Sprint 3** (see below)
 Phase 5  Terrain smoothing (bilinear DEM, shoreline)
 Phase 6  Feature gen audit on clones
-Phase 7  Ecoregion border anti-alias
+Phase 7  Ecoregion border anti-alias — **shipped Sprint 4**
 Phase 8  New content in Materia (tea, date palm…) + bridge entries only
 Phase 9  Ore geo-gating (create-world UI + deposit data) — after Phases 4–8 stable
 ```
