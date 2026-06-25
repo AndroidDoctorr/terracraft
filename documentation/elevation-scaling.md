@@ -104,6 +104,10 @@ Early Sprint 2 painted **sand on all land within 12 m of sea level**, making Man
 | `shorelineBandsEnabled` | `true` | Sand/stone only next to water |
 | `coastalInundationEnabled` | `true` | Fill below-sea-level mapped terrain in coastal band |
 | `waterSurfaceBlockOffset` | `1` | Water fills to `seaLevelBlockY` + this (default y=64) |
+| `lakeMeterSurfaceEnabled` | `true` | Use meter spill for inland lake surface (Sprint 5) |
+| `lakeShallowPreserveEnabled` | `true` | Cap shallow basin fill from DEM depth |
+| `lakeMinDepthBlocksFromDem` | `1` | Minimum lake depth in blocks |
+| `lakeMaxDepthBlocks` | `24` | Maximum lake depth (0 = no cap) |
 
 ### Test coordinates
 

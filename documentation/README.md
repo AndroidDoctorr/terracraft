@@ -13,6 +13,7 @@ Design notes and reference for the Terracraft Earth worldgen mod.
 - [world-generation-options.md](world-generation-options.md) — Flora, map scale, vertical scale, biome source fields
 - [elevation-scaling.md](elevation-scaling.md) — DEM → Y level mapping and config tuning
 - [ecoregions-data.md](ecoregions-data.md) — WWF TEOW / ArcGIS GeoJSON setup
+- [hydro-data.md](hydro-data.md) — lakes, rivers, ArcGIS hydro vectors (Sprint 6+)
 - [multi-version-setup.md](multi-version-setup.md) — per-MC-version Gradle modules
 
 ## Flora & Materia

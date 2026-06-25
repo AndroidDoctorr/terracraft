@@ -3,6 +3,7 @@ package com.torr.terracraft.geo;
 import com.torr.terracraft.config.TerracraftConfig;
 import com.torr.terracraft.world.gen.WaterColumnPlan;
 import com.torr.terracraft.world.gen.WaterColumnPlanner;
+import com.torr.terracraft.world.gen.LakeDepthMapper;
 
 /**
  * 18×18 elevation grid (16×16 chunk plus one-block border on each side) for terrain
@@ -92,7 +93,12 @@ public final class ChunkElevationField
                         seaLevelBlockY
                 );
                 int lakeSurfaceY = inlandLake
-                        ? spillSurfaceBlockYGrid(surfaceGrid, gridX, gridZ)
+                        ? LakeDepthMapper.lakeSpillBlockY(
+                                grid[gridX][gridZ],
+                                spillMetersGrid(grid, gridX, gridZ),
+                                surfaceGrid[gridX][gridZ],
+                                spillSurfaceBlockYGrid(surfaceGrid, gridX, gridZ)
+                        )
                         : Integer.MIN_VALUE;
                 plans[gridX][gridZ] = WaterColumnPlanner.plan(
                         grid[gridX][gridZ],

@@ -191,7 +191,7 @@ public class TerracraftBiomeSource extends BiomeSource
         if (TerracraftBiomes.isTerracraft(biomeKey))
         {
             EcoregionInfo ecoregion = EcoregionSamplerHolder.get().sample(latitude, longitude);
-            biomeKey = BiomeTransition.apply(
+            biomeKey = BiomeTransition.applyWithRiparian(
                     seed,
                     blockX,
                     blockZ,

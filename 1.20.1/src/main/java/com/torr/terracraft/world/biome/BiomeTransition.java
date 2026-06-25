@@ -48,6 +48,32 @@ public final class BiomeTransition
         return RainShadowPlacement.apply(resolved, latitude, longitude, elevationMeters);
     }
 
+    public static ResourceKey<Biome> applyWithRiparian(
+            long worldSeed,
+            int blockX,
+            int blockZ,
+            double latitude,
+            double longitude,
+            EcoregionInfo centerEcoregion,
+            ResourceKey<Biome> centerBiome,
+            FloraPlacementMode floraMode,
+            double elevationMeters
+    )
+    {
+        ResourceKey<Biome> resolved = apply(
+                worldSeed,
+                blockX,
+                blockZ,
+                latitude,
+                longitude,
+                centerEcoregion,
+                centerBiome,
+                floraMode,
+                elevationMeters
+        );
+        return RiparianPlacement.apply(resolved, latitude, longitude, elevationMeters);
+    }
+
     private static ResourceKey<Biome> applyBorderBlend(
             long worldSeed,
             int blockX,

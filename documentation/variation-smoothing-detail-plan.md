@@ -609,6 +609,29 @@ Softens hard ecoregion polygon edges with distance-weighted blending, transition
 
 ---
 
+## Sprint 5 — Lake depth & riparian heuristics (shipped)
+
+Improves inland lake depth from DEM meter spill and adds drainage-corridor vegetation without vector hydro data yet.
+
+| Component | Path |
+|-----------|------|
+| Lake depth | `LakeDepthMapper` — meter spill + shallow-basin cap |
+| Riparian relief | `RiparianSampler` — cardinal DEM relief / corridor detection |
+| Biome nudge | `RiparianPlacement` — strong corridors → `floodplain_meadow` |
+| Variants | Wetland + gallery tree boost on steppe/savanna/plains corridors |
+
+**Behavior:** Inland lakes use real-world spill elevation (meters) for water surface when block-space spill collapses under vertical compression. Shallow basins preserve DEM depth instead of flat fill. Low valleys with directional relief get wetland understory and optional floodplain biome nudge.
+
+**Config:** `lakeMeterSurfaceEnabled`, `lakeShallowPreserveEnabled`, `lakeMinDepthBlocksFromDem`, `lakeMaxDepthBlocks`, `riparianEnabled`, `riparianBiomeNudgeStrength`, `riparianWetlandStrength`
+
+**Debug:** `/terracraft coords` shows lake spill/depth and riparian strength.
+
+**Test:** Lake Merritt (`37.8014 -122.2585`), Sacramento Delta (`38.3 -121.5`), Nile valley (`26.0 32.5`), Iowa river bottoms (`41.6 -93.6`).
+
+**Next:** Vector hydro from ArcGIS — [hydro-data.md](hydro-data.md) (Sprint 6 lakes, Sprint 7 rivers).
+
+---
+
 ## Implementation order (revised)
 
 ```
@@ -617,7 +640,9 @@ Phase 1  Biome clone registry + med/steppe/scrub clones + clone_map.json
 Phase 2  FloraPlacementMode + create-world UI + level save data
 Phase 3  MateriaBridge (historical + biome JSON tables, soft dep)
 Phase 4  Biome variant profiles (density, clearings) — **shipped Sprint 3** (see below)
-Phase 5  Terrain smoothing (bilinear DEM, shoreline)
+Phase 5  Terrain smoothing (bilinear DEM, shoreline) — **partial: lake depth Sprint 5**
+Phase 5b Hydro vectors (ArcGIS lakes) — **planned Sprint 6**, see [hydro-data.md](hydro-data.md)
+Phase 5c Hydro vectors (rivers / riparian) — **planned Sprint 7**
 Phase 6  Feature gen audit on clones
 Phase 7  Ecoregion border anti-alias — **shipped Sprint 4**
 Phase 8  New content in Materia (tea, date palm…) + bridge entries only

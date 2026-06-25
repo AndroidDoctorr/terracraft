@@ -228,6 +228,64 @@ public final class TerracraftConfig
             .comment("Do not apply rain-shadow nudges above this elevation (meters).")
             .defineInRange("rainShadowMaxElevationMeters", 2200.0D, 200.0D, 5000.0D);
 
+    public static final ForgeConfigSpec.BooleanValue lakeMeterSurfaceEnabled = BUILDER
+            .comment("Lake depth")
+            .comment("Derive inland lake spill height from real-world meter spill, not block-space spill alone.")
+            .define("lakeMeterSurfaceEnabled", true);
+
+    public static final ForgeConfigSpec.BooleanValue lakeShallowPreserveEnabled = BUILDER
+            .comment("For shallow basins, cap water surface using DEM depth so flat block spill does not over-fill.")
+            .define("lakeShallowPreserveEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue lakeMinDepthBlocksFromDem = BUILDER
+            .comment("Minimum water depth (blocks) for inland lakes from DEM spill minus floor.")
+            .defineInRange("lakeMinDepthBlocksFromDem", 1, 1, 16);
+
+    public static final ForgeConfigSpec.IntValue lakeMaxDepthBlocks = BUILDER
+            .comment("Maximum water depth (blocks) for inland lakes (0 = no cap).")
+            .defineInRange("lakeMaxDepthBlocks", 24, 0, 64);
+
+    public static final ForgeConfigSpec.BooleanValue riparianEnabled = BUILDER
+            .comment("Riparian heuristics (Sprint 5; augmented by hydro vectors in Sprint 6)")
+            .comment("Detect drainage corridors from local DEM relief for wetland/gallery vegetation.")
+            .define("riparianEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue riparianSampleDegrees = BUILDER
+            .comment("Cardinal DEM sample offset (degrees) for riparian relief detection.")
+            .defineInRange("riparianSampleDegrees", 0.004D, 0.0005D, 0.05D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianMaxElevationMeters = BUILDER
+            .comment("Ignore riparian heuristics above sea level plus this elevation (meters).")
+            .defineInRange("riparianMaxElevationMeters", 800.0D, 50.0D, 4000.0D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianMinReliefMeters = BUILDER
+            .comment("Minimum average neighbor excess elevation (meters) to classify a drainage corridor.")
+            .defineInRange("riparianMinReliefMeters", 0.8D, 0.1D, 20.0D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianMaxReliefMeters = BUILDER
+            .comment("Relief (meters) at which riparian strength reaches maximum.")
+            .defineInRange("riparianMaxReliefMeters", 35.0D, 5.0D, 200.0D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianCorridorStrengthScale = BUILDER
+            .comment("Strength multiplier when relief is not strongly directional (non-corridor cells).")
+            .defineInRange("riparianCorridorStrengthScale", 0.65D, 0.1D, 1.0D);
+
+    public static final ForgeConfigSpec.BooleanValue riparianBiomeNudgeEnabled = BUILDER
+            .comment("Nudge strong riparian corridors toward floodplain_meadow on dry-land archetypes.")
+            .define("riparianBiomeNudgeEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue riparianBiomeNudgeStrength = BUILDER
+            .comment("Minimum riparian strength (0-1) for floodplain biome nudge.")
+            .defineInRange("riparianBiomeNudgeStrength", 0.65D, 0.1D, 1.0D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianWetlandStrength = BUILDER
+            .comment("Minimum riparian strength (0-1) for wetland variant profiles.")
+            .defineInRange("riparianWetlandStrength", 0.45D, 0.1D, 1.0D);
+
+    public static final ForgeConfigSpec.DoubleValue riparianGalleryTreeStrength = BUILDER
+            .comment("Minimum riparian strength (0-1) for gallery-tree density boost on steppe/savanna/plains.")
+            .defineInRange("riparianGalleryTreeStrength", 0.35D, 0.1D, 1.0D);
+
     public static final ForgeConfigSpec.ConfigValue<String> floraPlacementDefault = BUILDER
             .comment("Default flora placement for new worlds: historical (native ranges) or biome (climate-based, Materia-like).")
             .define("floraPlacementDefault", "historical");

@@ -19,10 +19,12 @@ import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
 import com.torr.terracraft.world.biome.EcoregionBorderSampler;
 import com.torr.terracraft.world.biome.RainShadowPlacement;
+import com.torr.terracraft.world.biome.RiparianSampler;
 import com.torr.terracraft.world.biome.BiomeVariantPicker;
 import com.torr.terracraft.world.biome.BiomeVariantProfile;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
 import com.torr.terracraft.world.gen.WaterColumnPlan;
+import com.torr.terracraft.world.gen.LakeDepthMapper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -181,6 +183,24 @@ public final class TerracraftCommands
                 field.adjacentToWater(localX, localZ) ? "yes" : "no",
                 maxSlope
         )), false);
+        if (waterPlan.kind() == WaterColumnPlan.Kind.LAKE)
+        {
+            double centerMeters = field.centerMeters(localX, localZ);
+            double spillMeters = field.spillMeters(localX, localZ);
+            int depthBlocks = LakeDepthMapper.lakeDepthBlocks(
+                    centerMeters,
+                    spillMeters,
+                    waterPlan.floorY(),
+                    waterPlan.waterTopY()
+            );
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Lake: spill %.1f m, floor %.1f m, depth %d blk (DEM Δ %.1f m)",
+                    spillMeters,
+                    centerMeters,
+                    depthBlocks,
+                    spillMeters - centerMeters
+            )), false);
+        }
         if (TerracraftConfig.biomeVariantsEnabled.get())
         {
             BlockPos pos = player.blockPosition();
@@ -217,6 +237,20 @@ public final class TerracraftCommands
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
                     "Rain shadow: %s",
                     RainShadowPlacement.isRainShadow(geo.latitude(), geo.longitude(), geo.elevationMeters()) ? "yes" : "no"
+            )), false);
+        }
+        if (TerracraftConfig.riparianEnabled.get())
+        {
+            RiparianSampler.Sample riparian = RiparianSampler.sample(
+                    geo.latitude(),
+                    geo.longitude(),
+                    geo.elevationMeters()
+            );
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Riparian: strength %.2f, corridor %s, relief %+.1f m",
+                    riparian.strength(),
+                    riparian.corridor() ? "yes" : "no",
+                    riparian.reliefMeters()
             )), false);
         }
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))
