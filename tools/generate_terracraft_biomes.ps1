@@ -152,7 +152,7 @@ function Get-FloraFeatures([string]$short) {
             Add-FloraId $picked "terracraft:flora_wild_squash"
             Add-FloraId $picked "terracraft:flora_wild_cotton"
         }
-        Add-FloraId $picked "terracraft:flora_oak_sparse"
+        Add-FloraId $picked "terracraft:flora_oak_tree"
         if ($short -match "_nearctic") { Add-FloraId $picked "terracraft:flora_maple_tree" }
     }
     elseif ($template -eq "forest") {
@@ -178,6 +178,7 @@ function Get-FloraFeatures([string]$short) {
             Add-FloraId $picked "terracraft:flora_indigo"
         }
         if ($short -match "_palearctic") { Add-FloraId $picked "terracraft:flora_birch_tree" }
+        if ($short -match "_palearctic|_nearctic") { Add-FloraId $picked "terracraft:flora_oak_tree" }
         if ($short -match "_afrotropical") { Add-FloraId $picked "terracraft:flora_baobab_tree" }
     }
     elseif ($template -eq "savanna") {
@@ -240,11 +241,14 @@ function Get-FloraFeatures([string]$short) {
         if ($short -match "_indomalayan|_afrotropical|_neotropical") { Add-FloraId $picked "terracraft:flora_wild_rice" }
     }
     elseif ($template -eq "badlands") {
-        Add-FloraId $picked "terracraft:flora_oak_sparse"
         if ($short -match "chaparral") {
+            Add-FloraId $picked "terracraft:flora_oak_tree"
             Add-FloraId $picked "terracraft:flora_wild_grape_vine"
             Add-FloraId $picked "terracraft:flora_wild_corn"
             Add-FloraId $picked "terracraft:flora_wild_peppers"
+        }
+        else {
+            Add-FloraId $picked "terracraft:flora_oak_sparse"
         }
         if ($short -eq "semi_arid_scrub" -and (Test-OldWorld $short)) {
             Add-FloraId $picked "terracraft:flora_wild_flax"
@@ -293,7 +297,11 @@ function Pick-Template([string]$id) {
 }
 
 function Tune-Biome([object]$json, [string]$id) {
-    if ($id -match "mediterranean") { $json.temperature = 0.95; $json.downfall = 0.35 }
+    if ($id -match "mediterranean") {
+        $json.temperature = 0.95
+        $json.downfall = 0.45
+        $json.has_precipitation = $true
+    }
     if ($id -match "semi_arid|chaparral") { $json.temperature = 0.9; $json.downfall = 0.2 }
     if ($id -match "tundra") { $json.temperature = 0.0; $json.downfall = 0.5 }
     if ($id -match "tropical_dry") { $json.temperature = 0.9; $json.downfall = 0.35 }

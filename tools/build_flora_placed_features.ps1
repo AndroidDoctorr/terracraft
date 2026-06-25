@@ -49,13 +49,13 @@ Surface-Placed "flora_indigo" "materia:indigo_patch" 1 9
 Surface-Placed "flora_esparto" "materia:esparto_patch" 3 4 "MOTION_BLOCKING_NO_LEAVES"
 
 # --- Vanilla tree stand-ins ---
-Surface-Placed "flora_oak_tree" "minecraft:oak" 2 5 -ExtraPlacement @(
+Surface-Placed "flora_oak_tree" "minecraft:oak" 3 4 -ExtraPlacement @(
     (Sapling-Survive "minecraft:oak_sapling" @{ stage = "0" })
 )
-Surface-Placed "flora_oak_sparse" "minecraft:oak" 1 9 -ExtraPlacement @(
+Surface-Placed "flora_oak_sparse" "minecraft:oak" 2 7 -ExtraPlacement @(
     (Sapling-Survive "minecraft:oak_sapling" @{ stage = "0" })
 )
-Surface-Placed "flora_birch_tree" "minecraft:birch" 1 8 -ExtraPlacement @(
+Surface-Placed "flora_birch_tree" "minecraft:birch" 2 7 -ExtraPlacement @(
     (Sapling-Survive "minecraft:birch_sapling" @{ stage = "0" })
 )
 Surface-Placed "flora_spruce_tree" "minecraft:spruce" 1 9 -ExtraPlacement @(
@@ -66,10 +66,10 @@ Surface-Placed "flora_acacia_tree" "minecraft:acacia" 2 6 -ExtraPlacement @(
 )
 
 # --- Materia trees ---
-Surface-Placed "flora_olive_tree" "materia:olive_tree" 2 5 -ExtraPlacement @(
+Surface-Placed "flora_olive_tree" "materia:olive_tree" 3 4 -ExtraPlacement @(
     (Sapling-Survive "materia:olive_sapling" @{ stage = "0" })
 )
-Surface-Placed "flora_cypress_tree" "materia:cypress_tree" 0 7 -ExtraPlacement @(
+Surface-Placed "flora_cypress_tree" "materia:cypress_tree" 1 6 -ExtraPlacement @(
     (Sapling-Survive "materia:cypress_sapling" @{})
 )
 Surface-Placed "flora_baobab_tree" "materia:baobab_tree" 0 10 -ExtraPlacement @(
@@ -81,7 +81,7 @@ Surface-Placed "flora_palm_tree" "materia:palm_tree" 0 9 -ExtraPlacement @(
 Surface-Placed "flora_rubber_tree" "materia:rubber_tree" 0 10 -ExtraPlacement @(
     (Sapling-Survive "materia:rubber_tree_sapling" @{ stage = "0" })
 )
-Surface-Placed "flora_maple_tree" "materia:maple_tree" 1 8 -ExtraPlacement @(
+Surface-Placed "flora_maple_tree" "materia:maple_tree" 2 6 -ExtraPlacement @(
     (Sapling-Survive "materia:maple_sapling" @{ stage = "0" })
 )
 

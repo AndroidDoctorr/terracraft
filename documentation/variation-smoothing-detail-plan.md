@@ -567,6 +567,28 @@ Materia already has tin, bauxite, malachite, sphalerite, sulfur, saltpeter, magn
 
 ---
 
+## Sprint 3 — Biome variants (shipped)
+
+Patch-scale variation within Terracraft clone biomes without adding new biome registry entries.
+
+| Component | Path |
+|-----------|------|
+| Variant palettes | `data/terracraft/ecoregion/variant_palettes.json` |
+| Picker / decorator | `BiomeVariantPicker`, `BiomeVariantDecorator` |
+| Archetypes | Mediterranean, forest, plains, chaparral, steppe |
+
+**Behavior:** After vanilla biome decoration, each 128×128 block patch gets a weighted profile (OPEN_SCRUB, WOODLAND, CLEARING, MARSH_POCKET, …). Woodland patches may receive extra trees; clearing patches become meadows; marsh pockets add tall grass. Tree density by elevation is tracked in `/terracraft coords` for tuning — **post-gen per-block tree removal was removed** after it produced floating leaf clumps.
+
+**Config:** `biomeVariantsEnabled`, `variationPatchScaleBlocks`, `variantElevationFalloffMeters`, `variantLowElevationTreeBoost`, `variantHighElevationTreeScale`
+
+**Debug:** `/terracraft coords` shows `Variant: WOODLAND, tree density 1.05, …`
+
+**Flora polish:** Mediterranean uses green `patch_grass_plain` + precipitation; plains/forest/chaparral tree counts raised in `build_flora_placed_features.ps1`.
+
+**New chunks required** after updating jar or regenerating biome JSON.
+
+---
+
 ## Implementation order (revised)
 
 ```
@@ -574,7 +596,7 @@ Phase 0  GeoJSON + REALM; tools/build_ecoregion_clone_map.ps1
 Phase 1  Biome clone registry + med/steppe/scrub clones + clone_map.json
 Phase 2  FloraPlacementMode + create-world UI + level save data
 Phase 3  MateriaBridge (historical + biome JSON tables, soft dep)
-Phase 4  Biome variant profiles (density, clearings)
+Phase 4  Biome variant profiles (density, clearings) — **shipped Sprint 3** (see below)
 Phase 5  Terrain smoothing (bilinear DEM, shoreline)
 Phase 6  Feature gen audit on clones
 Phase 7  Ecoregion border anti-alias
