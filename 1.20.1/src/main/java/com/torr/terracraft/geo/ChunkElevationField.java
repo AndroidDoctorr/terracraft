@@ -1,33 +1,49 @@
 package com.torr.terracraft.geo;
 
 import com.torr.terracraft.config.TerracraftConfig;
+import com.torr.terracraft.world.gen.WaterColumnPlan;
+import com.torr.terracraft.world.gen.WaterColumnPlanner;
 
 /**
  * 18×18 elevation grid (16×16 chunk plus one-block border on each side) for terrain
- * columns and simple depression / lake detection.
+ * columns, shoreline slope, and inland lake basins.
  */
 public final class ChunkElevationField
 {
     private static final int GRID_SIZE = 18;
+    private static final int[][] NEIGHBOR_OFFSETS = {
+            {-1, 0}, {1, 0}, {0, -1}, {0, 1},
+            {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+    };
 
-    private final int chunkMinX;
-    private final int chunkMinZ;
     private final double[][] meters;
+    private final int[][] surfaceBlockY;
+    private final boolean[][] touchesOcean;
+    private final WaterColumnPlan[][] waterPlans;
     private final double seaLevelMeters;
 
-    private ChunkElevationField(int chunkMinX, int chunkMinZ, double[][] meters, double seaLevelMeters)
+    private ChunkElevationField(
+            double[][] meters,
+            int[][] surfaceBlockY,
+            boolean[][] touchesOcean,
+            WaterColumnPlan[][] waterPlans,
+            double seaLevelMeters
+    )
     {
-        this.chunkMinX = chunkMinX;
-        this.chunkMinZ = chunkMinZ;
         this.meters = meters;
+        this.surfaceBlockY = surfaceBlockY;
+        this.touchesOcean = touchesOcean;
+        this.waterPlans = waterPlans;
         this.seaLevelMeters = seaLevelMeters;
     }
 
     public static ChunkElevationField sample(int chunkMinX, int chunkMinZ)
     {
         double[][] grid = new double[GRID_SIZE][GRID_SIZE];
+        int[][] surfaceGrid = new int[GRID_SIZE][GRID_SIZE];
         ElevationSampler sampler = ElevationSamplerHolder.get();
         double seaLevelMeters = TerracraftConfig.seaLevelMeters.get();
+        double oceanThreshold = TerracraftConfig.oceanSurfaceThresholdMeters.get();
 
         for (int gridX = 0; gridX < GRID_SIZE; gridX++)
         {
@@ -37,11 +53,90 @@ public final class ChunkElevationField
                 int blockZ = chunkMinZ - 1 + gridZ;
                 double latitude = EarthProjection.blockZToLatitude(blockZ);
                 double longitude = EarthProjection.blockXToLongitude(blockX);
-                grid[gridX][gridZ] = sampler.sampleElevationMeters(latitude, longitude);
+                double rawMeters = sampler.sampleElevationMeters(latitude, longitude);
+                grid[gridX][gridZ] = rawMeters;
+                surfaceGrid[gridX][gridZ] = TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, rawMeters);
             }
         }
 
-        return new ChunkElevationField(chunkMinX, chunkMinZ, grid, seaLevelMeters);
+        boolean[][] oceanTouch = new boolean[GRID_SIZE][GRID_SIZE];
+        for (int gridX = 0; gridX < GRID_SIZE; gridX++)
+        {
+            for (int gridZ = 0; gridZ < GRID_SIZE; gridZ++)
+            {
+                oceanTouch[gridX][gridZ] = isOceanCell(grid[gridX][gridZ], seaLevelMeters, oceanThreshold);
+            }
+        }
+
+        boolean[][] touchesOcean = new boolean[GRID_SIZE][GRID_SIZE];
+        for (int gridX = 0; gridX < GRID_SIZE; gridX++)
+        {
+            for (int gridZ = 0; gridZ < GRID_SIZE; gridZ++)
+            {
+                touchesOcean[gridX][gridZ] = touchesOceanGrid(oceanTouch, gridX, gridZ);
+            }
+        }
+
+        int seaLevelBlockY = TerracraftConfig.seaLevelBlockY.get();
+        WaterColumnPlan[][] plans = new WaterColumnPlan[GRID_SIZE][GRID_SIZE];
+        for (int gridX = 0; gridX < GRID_SIZE; gridX++)
+        {
+            for (int gridZ = 0; gridZ < GRID_SIZE; gridZ++)
+            {
+                boolean inlandLake = isInlandDepressionGrid(
+                        surfaceGrid,
+                        grid,
+                        gridX,
+                        gridZ,
+                        seaLevelMeters,
+                        seaLevelBlockY
+                );
+                int lakeSurfaceY = inlandLake
+                        ? spillSurfaceBlockYGrid(surfaceGrid, gridX, gridZ)
+                        : Integer.MIN_VALUE;
+                plans[gridX][gridZ] = WaterColumnPlanner.plan(
+                        grid[gridX][gridZ],
+                        surfaceGrid[gridX][gridZ],
+                        seaLevelBlockY,
+                        seaLevelMeters,
+                        inlandLake,
+                        lakeSurfaceY,
+                        touchesOcean[gridX][gridZ]
+                );
+            }
+        }
+
+        return new ChunkElevationField(grid, surfaceGrid, touchesOcean, plans, seaLevelMeters);
+    }
+
+    private static boolean isOceanCell(double rawMeters, double seaLevelMeters, double oceanThreshold)
+    {
+        return rawMeters <= seaLevelMeters + oceanThreshold;
+    }
+
+    private static boolean touchesOceanGrid(boolean[][] oceanTouch, int gridX, int gridZ)
+    {
+        if (oceanTouch[gridX][gridZ])
+        {
+            return true;
+        }
+
+        for (int[] offset : NEIGHBOR_OFFSETS)
+        {
+            int nx = gridX + offset[0];
+            int nz = gridZ + offset[1];
+            if (inGrid(nx, nz) && oceanTouch[nx][nz])
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean inGrid(int gridX, int gridZ)
+    {
+        return gridX >= 0 && gridX < GRID_SIZE && gridZ >= 0 && gridZ < GRID_SIZE;
     }
 
     public double centerMeters(int localX, int localZ)
@@ -51,31 +146,143 @@ public final class ChunkElevationField
 
     public int surfaceBlockY(int localX, int localZ)
     {
-        double rawMeters = centerMeters(localX, localZ);
-        double latitude = EarthProjection.blockZToLatitude(chunkMinZ + localZ);
-        double longitude = EarthProjection.blockXToLongitude(chunkMinX + localX);
-        return TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, rawMeters);
+        return surfaceBlockY[localX + 1][localZ + 1];
+    }
+
+    public WaterColumnPlan waterPlan(int localX, int localZ)
+    {
+        return waterPlans[localX + 1][localZ + 1];
+    }
+
+    public boolean adjacentToWater(int localX, int localZ)
+    {
+        int gridX = localX + 1;
+        int gridZ = localZ + 1;
+
+        if (waterPlans[gridX][gridZ].hasWater())
+        {
+            return true;
+        }
+
+        for (int[] offset : NEIGHBOR_OFFSETS)
+        {
+            int nx = gridX + offset[0];
+            int nz = gridZ + offset[1];
+            if (inGrid(nx, nz) && waterPlans[nx][nz].hasWater())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public int maxNeighborSlopeBlocks(int localX, int localZ)
+    {
+        int gridX = localX + 1;
+        int gridZ = localZ + 1;
+        int centerY = surfaceBlockY[gridX][gridZ];
+        int maxSlope = 0;
+
+        for (int[] offset : NEIGHBOR_OFFSETS)
+        {
+            int nx = gridX + offset[0];
+            int nz = gridZ + offset[1];
+            if (!inGrid(nx, nz))
+            {
+                continue;
+            }
+            int neighborY = surfaceBlockY[nx][nz];
+            maxSlope = Math.max(maxSlope, Math.abs(centerY - neighborY));
+        }
+
+        return maxSlope;
     }
 
     public double spillMeters(int localX, int localZ)
     {
-        int gridX = localX + 1;
-        int gridZ = localZ + 1;
-        double spill = Double.POSITIVE_INFINITY;
-        spill = Math.min(spill, meters[gridX - 1][gridZ]);
-        spill = Math.min(spill, meters[gridX + 1][gridZ]);
-        spill = Math.min(spill, meters[gridX][gridZ - 1]);
-        spill = Math.min(spill, meters[gridX][gridZ + 1]);
+        return spillMetersGrid(meters, localX + 1, localZ + 1);
+    }
+
+    public int spillSurfaceBlockY(int localX, int localZ)
+    {
+        return spillSurfaceBlockYGrid(surfaceBlockY, localX + 1, localZ + 1);
+    }
+
+    private static int spillSurfaceBlockYGrid(int[][] surfaceGrid, int gridX, int gridZ)
+    {
+        int spill = Integer.MAX_VALUE;
+
+        for (int[] offset : NEIGHBOR_OFFSETS)
+        {
+            int nx = gridX + offset[0];
+            int nz = gridZ + offset[1];
+            if (inGrid(nx, nz))
+            {
+                spill = Math.min(spill, surfaceGrid[nx][nz]);
+            }
+        }
+
         return spill;
     }
 
     public boolean isInlandDepression(int localX, int localZ)
     {
-        double center = centerMeters(localX, localZ);
-        double spill = spillMeters(localX, localZ);
-        double minDepth = TerracraftConfig.depressionMinDepthMeters.get();
+        return isInlandDepressionGrid(
+                surfaceBlockY,
+                meters,
+                localX + 1,
+                localZ + 1,
+                seaLevelMeters,
+                TerracraftConfig.seaLevelBlockY.get()
+        );
+    }
+
+    private static boolean isInlandDepressionGrid(
+            int[][] surfaceGrid,
+            double[][] meterGrid,
+            int gridX,
+            int gridZ,
+            double seaLevelMeters,
+            int seaBlockY
+    )
+    {
+        int centerY = surfaceGrid[gridX][gridZ];
+        int spillY = spillSurfaceBlockYGrid(surfaceGrid, gridX, gridZ);
+        int minDepthBlocks = TerracraftConfig.depressionMinDepthBlocks.get();
+
+        if (spillY != Integer.MAX_VALUE && spillY > seaBlockY && centerY + minDepthBlocks <= spillY)
+        {
+            return true;
+        }
+
+        double center = meterGrid[gridX][gridZ];
+        double spill = spillMetersGrid(meterGrid, gridX, gridZ);
+        if (spill == Double.POSITIVE_INFINITY)
+        {
+            return false;
+        }
+
+        double minDepthMeters = TerracraftConfig.depressionMinDepthMeters.get();
         return spill > seaLevelMeters + 0.05D
-                && center + minDepth < spill - 0.05D;
+                && center + minDepthMeters < spill - 0.05D;
+    }
+
+    private static double spillMetersGrid(double[][] meterGrid, int gridX, int gridZ)
+    {
+        double spill = Double.POSITIVE_INFINITY;
+
+        for (int[] offset : NEIGHBOR_OFFSETS)
+        {
+            int nx = gridX + offset[0];
+            int nz = gridZ + offset[1];
+            if (inGrid(nx, nz))
+            {
+                spill = Math.min(spill, meterGrid[nx][nz]);
+            }
+        }
+
+        return spill;
     }
 
     public int lakeSurfaceBlockY(int localX, int localZ)
@@ -85,9 +292,6 @@ public final class ChunkElevationField
             return Integer.MIN_VALUE;
         }
 
-        double spillRawMeters = spillMeters(localX, localZ);
-        double latitude = EarthProjection.blockZToLatitude(chunkMinZ + localZ);
-        double longitude = EarthProjection.blockXToLongitude(chunkMinX + localX);
-        return TerrainElevationMapper.rawSampleToBlockY(latitude, longitude, spillRawMeters);
+        return spillSurfaceBlockY(localX, localZ);
     }
 }

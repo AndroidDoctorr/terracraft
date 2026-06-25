@@ -75,6 +75,47 @@ Example at defaults (`demZoom = 12`, offset `2` → baseline zoom 10):
 - **Mountains too tall overall:** lower `coastalVerticalScale` (baseline), not detail scale.
 - **Revert to old single-layer mapping:** `elevationHighPassEnabled = false`.
 
+## Water, shorelines, and lakes (Sprint 2)
+
+Terrain generation uses an 18×18 elevation grid per chunk for neighbor spill, slope, and water planning.
+
+| Feature | Behavior |
+|---------|----------|
+| **Ocean** | Raw DEM ≤ sea level (+ threshold) → seafloor from bathymetry, water filled to `seaLevelBlockY` |
+| **Estuaries** | Low land touching ocean (within ~25 m) → water filled to sea level (harbors, tidal flats) |
+| **Coastal clamp** | High-pass mapping capped to direct `coastal_log` height for low elevations — prevents cities floating far above sea level |
+| **Shoreline bands** | Sand/gravel/stone **only adjacent to water**, not all low-elevation land |
+| **Inland lakes** | 8-neighbor spill detects basins; water fills to spill Y |
+
+### Why Sprint 2.1 was needed
+
+Early Sprint 2 painted **sand on all land within 12 m of sea level**, making Manhattan and Oakland look like deserts. Water also failed when high-pass terrain mapped coasts **above** `seaLevelBlockY` — the generator never filled air with water. Coastal clamp + ocean/estuary water columns fix both.
+
+### Config (water section in `terracraft-common.toml`)
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `oceanSurfaceThresholdMeters` | `0.5` | DEM at/below sea + this → open ocean |
+| `estuaryMaxElevationMeters` | `25` | Max elevation for harbor fill when touching ocean |
+| `coastalTerrainClampEnabled` | `true` | Cap high-pass height on low elevations |
+| `coastalTerrainClampBelowMeters` | `75` | Apply clamp below sea + this |
+| `coastalTerrainClampBlockMargin` | `3` | Extra blocks above direct mapping when clamping |
+| `depressionMinDepthBlocks` | `2` | Min depth below spill for inland lakes |
+| `shorelineBandsEnabled` | `true` | Sand/stone only next to water |
+| `coastalInundationEnabled` | `true` | Fill below-sea-level mapped terrain in coastal band |
+| `waterSurfaceBlockOffset` | `1` | Water fills to `seaLevelBlockY` + this (default y=64) |
+
+### Test coordinates
+
+| Location | `/tpll` | What to check |
+|----------|---------|---------------|
+| Governor's Island → Manhattan | `40.689 -74.016` | NY Harbor water, grass on island not endless sand |
+| Lake Merritt | `37.8014 -122.2585` | Lake basin; `/terracraft coords` → `kind LAKE` |
+| Oakland downtown | `37.804 -122.271` | Grass/plains surface, hills eastward |
+| SF Bay coast | `37.8199 -122.4783` | Water in bay, sand only at shore |
+
+**New chunks required** after changing water/terrain settings.
+
 ## Extending vertical space (optional)
 
 Vanilla Planet Earth uses `min_y: -64`, `height: 384` (Y up to 320). You do **not** need a mod to go a bit taller — edit the datapack dimension type:

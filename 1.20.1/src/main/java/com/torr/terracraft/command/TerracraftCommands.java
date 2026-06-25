@@ -4,9 +4,11 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.torr.terracraft.config.FloraPlacementMode;
+import com.torr.terracraft.config.TerracraftConfig;
 import com.torr.terracraft.config.HorizontalScaleOption;
 import com.torr.terracraft.geo.BiomePlacement;
 import com.torr.terracraft.geo.BlockGeoTarget;
+import com.torr.terracraft.geo.ChunkElevationField;
 import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.GeoCoordinate;
@@ -16,6 +18,7 @@ import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
+import com.torr.terracraft.world.gen.WaterColumnPlan;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -156,6 +159,24 @@ public final class TerracraftCommands
                     terrainY
             )), false);
         }
+        int chunkMinX = player.blockPosition().getX() & ~15;
+        int chunkMinZ = player.blockPosition().getZ() & ~15;
+        int localX = player.blockPosition().getX() & 15;
+        int localZ = player.blockPosition().getZ() & 15;
+        ChunkElevationField field = ChunkElevationField.sample(chunkMinX, chunkMinZ);
+        WaterColumnPlan waterPlan = field.waterPlan(localX, localZ);
+        int surfaceY = field.surfaceBlockY(localX, localZ);
+        int maxSlope = field.maxNeighborSlopeBlocks(localX, localZ);
+        double seaLevelMeters = TerracraftConfig.seaLevelMeters.get();
+        source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                "Water: floor Y %d, mapped Y %d, water top %s, kind %s, coastal shore %s, slope %d blk",
+                waterPlan.floorY(),
+                surfaceY,
+                waterPlan.hasWater() ? Integer.toString(waterPlan.waterTopY()) : "none",
+                waterPlan.kind(),
+                field.adjacentToWater(localX, localZ) ? "yes" : "no",
+                maxSlope
+        )), false);
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))
         {
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,

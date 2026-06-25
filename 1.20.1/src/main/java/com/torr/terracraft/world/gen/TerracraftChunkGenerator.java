@@ -9,7 +9,9 @@ import com.torr.terracraft.geo.EarthProjection;
 import com.torr.terracraft.geo.ElevationSamplerHolder;
 import com.torr.terracraft.geo.TerrainElevationMapper;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
+import com.torr.terracraft.world.gen.ShorelineSurface;
 import com.torr.terracraft.world.gen.TerracraftBiomeSource;
+import com.torr.terracraft.world.gen.WaterColumnPlan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -117,7 +119,6 @@ public class TerracraftChunkGenerator extends ChunkGenerator
         int minY = chunk.getMinBuildHeight();
         int maxY = chunk.getMaxBuildHeight() - 1;
         double seaLevelMeters = TerracraftConfig.seaLevelMeters.get();
-        int seaLevelBlockY = TerracraftConfig.seaLevelBlockY.get();
         ChunkElevationField field = ChunkElevationField.sample(chunkMinX, chunkMinZ);
 
         for (int localX = 0; localX < 16; localX++)
@@ -127,12 +128,16 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                 int worldX = chunkMinX + localX;
                 int worldZ = chunkMinZ + localZ;
                 double elevationMeters = field.centerMeters(localX, localZ);
-                int surfaceY = field.surfaceBlockY(localX, localZ);
-                int lakeSurfaceY = field.lakeSurfaceBlockY(localX, localZ);
-                boolean inlandLake = lakeSurfaceY != Integer.MIN_VALUE;
+                WaterColumnPlan waterPlan = field.waterPlan(localX, localZ);
+                int floorY = waterPlan.floorY();
+                int waterTopY = waterPlan.waterTopY();
+                int maxSlopeBlocks = field.maxNeighborSlopeBlocks(localX, localZ);
+                boolean coastalShore = field.adjacentToWater(localX, localZ);
+                boolean underwater = waterPlan.hasWater()
+                        || elevationMeters <= seaLevelMeters;
                 Holder<Biome> biome = getBiomeSource().getNoiseBiome(
                         QuartPos.fromBlock(worldX),
-                        QuartPos.fromBlock(surfaceY),
+                        QuartPos.fromBlock(floorY),
                         QuartPos.fromBlock(worldZ),
                         randomState.sampler()
                 );
@@ -144,49 +149,63 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                             biome,
                             elevationMeters,
                             seaLevelMeters,
-                            seaLevelBlockY,
                             y,
-                            surfaceY,
-                            inlandLake,
-                            lakeSurfaceY
+                            floorY,
+                            waterTopY,
+                            maxSlopeBlocks,
+                            underwater,
+                            coastalShore
                     );
-                    boolean notify = y == surfaceY;
+                    boolean notify = y == floorY;
                     chunk.setBlockState(pos, state, notify);
                 }
             }
         }
     }
 
-    private static BlockState terrainBlock(Holder<Biome> biome, double elevationMeters, double seaLevelMeters,
-                                           int seaLevelBlockY, int y, int surfaceY, boolean inlandLake,
-                                           int lakeSurfaceY)
+    private static BlockState terrainBlock(
+            Holder<Biome> biome,
+            double elevationMeters,
+            double seaLevelMeters,
+            int y,
+            int floorY,
+            int waterTopY,
+            int maxSlopeBlocks,
+            boolean underwater,
+            boolean coastalShore
+    )
     {
-        if (y > surfaceY)
+        if (y > floorY)
         {
-            if (inlandLake && y <= lakeSurfaceY)
-            {
-                return Blocks.WATER.defaultBlockState();
-            }
-            if (!inlandLake && y <= seaLevelBlockY && elevationMeters <= seaLevelMeters)
+            if (waterTopY != Integer.MIN_VALUE && y <= waterTopY)
             {
                 return Blocks.WATER.defaultBlockState();
             }
             return Blocks.AIR.defaultBlockState();
         }
-        if (y == surfaceY)
+        if (y == floorY)
         {
-            if (inlandLake && lakeSurfaceY > surfaceY)
-            {
-                return Blocks.WATER.defaultBlockState();
-            }
-            return BiomeSurfaceRules.surfaceBlock(
+            boolean seafloor = waterTopY != Integer.MIN_VALUE && waterTopY > floorY;
+            return ShorelineSurface.surfaceBlock(
                     biome,
                     elevationMeters,
                     seaLevelMeters,
-                    elevationMeters <= seaLevelMeters
+                    floorY,
+                    maxSlopeBlocks,
+                    seafloor || underwater,
+                    coastalShore
             );
         }
-        return BiomeSurfaceRules.subsurfaceBlock(biome, y, surfaceY);
+        return ShorelineSurface.subsurfaceBlock(
+                biome,
+                y,
+                floorY,
+                elevationMeters,
+                seaLevelMeters,
+                maxSlopeBlocks,
+                underwater,
+                coastalShore
+        );
     }
 
     @Override

@@ -23,6 +23,18 @@ public final class TerracraftConfig
             .comment("Minecraft Y level used for sea level when vertical compression is enabled.")
             .defineInRange("seaLevelBlockY", 63, -64, 320);
 
+    public static final ForgeConfigSpec.IntValue waterSurfaceBlockOffset = BUILDER
+            .comment("Water surfaces (ocean, estuary, lakes) fill to seaLevelBlockY plus this offset. Default 1 raises water one block above the terrain reference sea level.")
+            .defineInRange("waterSurfaceBlockOffset", 1, 0, 16);
+
+    public static int waterSurfaceBlockY()
+    {
+        return Math.min(
+                seaLevelBlockY.get() + waterSurfaceBlockOffset.get(),
+                maxWorldY.get()
+        );
+    }
+
     public static final ForgeConfigSpec.ConfigValue<String> elevationMapping = BUILDER
             .comment("Elevation mapping mode: linear (constant scale) or coastal_log (steep near sea level, compresses mountains).")
             .define("elevationMapping", "coastal_log");
@@ -86,8 +98,53 @@ public final class TerracraftConfig
             .defineInRange("elevationDetailMaxAbsMeters", 0.0D, 0.0D, 2000.0D);
 
     public static final ForgeConfigSpec.DoubleValue depressionMinDepthMeters = BUILDER
+            .comment("Water and shoreline")
             .comment("Minimum real-world depth (meters) below the local spill elevation to classify a cell as an inland lake basin.")
-            .defineInRange("depressionMinDepthMeters", 0.75D, 0.1D, 50.0D);
+            .defineInRange("depressionMinDepthMeters", 0.5D, 0.1D, 50.0D);
+
+    public static final ForgeConfigSpec.IntValue depressionMinDepthBlocks = BUILDER
+            .comment("Minimum terrain depth (blocks) below the 8-neighbor spill height to classify an inland lake basin.")
+            .defineInRange("depressionMinDepthBlocks", 2, 1, 32);
+
+    public static final ForgeConfigSpec.BooleanValue shorelineBandsEnabled = BUILDER
+            .comment("Place sand/gravel beaches and stone cliffs near sea level based on local slope.")
+            .define("shorelineBandsEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue shorelineFeatherMeters = BUILDER
+            .comment("Real-world elevation band above sea level that receives shoreline surface blocks.")
+            .defineInRange("shorelineFeatherMeters", 12.0D, 0.0D, 100.0D);
+
+    public static final ForgeConfigSpec.IntValue shorelineFeatherBlocks = BUILDER
+            .comment("Minecraft Y band around seaLevelBlockY that receives shoreline surface blocks.")
+            .defineInRange("shorelineFeatherBlocks", 4, 0, 32);
+
+    public static final ForgeConfigSpec.IntValue shorelineCliffSlopeBlocks = BUILDER
+            .comment("Max neighbor height difference (blocks) below which a near-shore cell uses sand instead of stone.")
+            .defineInRange("shorelineCliffSlopeBlocks", 4, 1, 32);
+
+    public static final ForgeConfigSpec.BooleanValue coastalInundationEnabled = BUILDER
+            .comment("Fill terrain below seaLevelBlockY with water when elevation is within shorelineFeatherMeters of sea level (estuaries/bays).")
+            .define("coastalInundationEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue oceanSurfaceThresholdMeters = BUILDER
+            .comment("Raw DEM elevation at or below sea level plus this value is treated as open ocean (water to seaLevelBlockY).")
+            .defineInRange("oceanSurfaceThresholdMeters", 0.5D, 0.0D, 10.0D);
+
+    public static final ForgeConfigSpec.DoubleValue estuaryMaxElevationMeters = BUILDER
+            .comment("Low land within this many meters above sea level that touches ocean gets filled to seaLevelBlockY (harbors, tidal flats).")
+            .defineInRange("estuaryMaxElevationMeters", 25.0D, 0.0D, 100.0D);
+
+    public static final ForgeConfigSpec.BooleanValue coastalTerrainClampEnabled = BUILDER
+            .comment("Cap high-pass mapped height to direct coastal_log mapping for low elevations so cities and bays stay near sea level.")
+            .define("coastalTerrainClampEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue coastalTerrainClampBelowMeters = BUILDER
+            .comment("Apply coastal terrain clamp when raw elevation is at or below sea level plus this value.")
+            .defineInRange("coastalTerrainClampBelowMeters", 75.0D, 0.0D, 500.0D);
+
+    public static final ForgeConfigSpec.IntValue coastalTerrainClampBlockMargin = BUILDER
+            .comment("Extra blocks allowed above direct coastal_log mapping when clamping low elevations.")
+            .defineInRange("coastalTerrainClampBlockMargin", 3, 0, 32);
 
     public static final ForgeConfigSpec.BooleanValue useEcoregionBiomes = BUILDER
             .comment("Ecoregion settings")

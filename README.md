@@ -15,6 +15,10 @@ Terracraft is designed to work with **[Materia](https://github.com/AndroidDoctor
 
 Terracraft owns **where** Materia plants spawn on Planet Earth; Materia owns **block/item definitions**. The bridge uses Forge biome modifiers with `forge:mod_loaded` conditions — no hard dependency.
 
+## Recommended: Distant Horizons
+
+Planet Earth worlds are enormous at 1:1 scale. **[Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/distant-horizons)** (or similar LOD mods) is not required, but strongly recommended — it makes coastlines, valleys, and landmarks readable from afar while chunks load. Terracraft will remain compatible without it; we plan to call this out on the CurseForge page.
+
 ## Quick start (1.20.1 — active development)
 
 ```bat
@@ -55,6 +59,7 @@ See [multi-version-setup.md](documentation/multi-version-setup.md) for build ins
 | [ecoregions-data.md](documentation/ecoregions-data.md) | WWF / ArcGIS data setup |
 | [elevation-scaling.md](documentation/elevation-scaling.md) | DEM → Minecraft Y mapping |
 | [variation-smoothing-detail-plan.md](documentation/variation-smoothing-detail-plan.md) | Roadmap (variants, smoothing, future plants) |
+| [landmark-features-plan.md](documentation/landmark-features-plan.md) | Future iconic sites (White Cliffs, Sedona, etc.) |
 | [design-principles.md](documentation/design-principles.md) | Resolved decisions, ornamental rules, suggested ideas |
 
 For AI-assisted development, see [AGENTS.md](AGENTS.md) and [documentation/reference/](documentation/reference/).
