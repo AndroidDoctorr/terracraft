@@ -1,6 +1,6 @@
 # Freshwater hydro data (ArcGIS & vectors)
 
-Terracraft currently places **ocean, estuary, and inland lakes** from the Terrarium DEM using depression/spill heuristics (Sprint 2). Sprint 5 improves **lake depth** from meter-space spill. **Named lakes, rivers, and reservoirs** need vector hydro layers — the same ArcGIS REST / GeoJSON pattern already used for WWF ecoregions.
+Terracraft places **ocean, estuary, and inland lakes** from the Terrarium DEM (Sprint 2) with meter-space depth tuning (Sprint 5). **Sprint 6** adds **Natural Earth lake polygons** (~1,355 major lakes) plus a bundled **Lake Merritt** supplement for Bay Area playtests.
 
 ---
 
@@ -21,8 +21,8 @@ This is **authoritative geography** — same design principle as ecoregion polyg
 | Sprint | Scope | Data source (examples) | Generator effect |
 |--------|--------|------------------------|------------------|
 | **5** ✓ | Lake depth from DEM spill; DEM riparian heuristics | Terrarium DEM only | Shallow basins, gallery forest in valleys |
-| **6** | **Lake & reservoir polygons** | Esri Living Atlas / HydroSHEDS lakes, USGS NHD Waterbody, Natural Earth `ne_10m_lakes` | Force `LAKE` columns inside polygons; surface Y from polygon attributes or DEM |
-| **7** | **River centerlines & wide channels** | NHD Flowline, Natural Earth `ne_10m_rivers_lake_centerlines`, HydroSHEDS rivers | Riparian bias along buffers; optional 1-block-wide water at 1:1 scale |
+| **6** (revised) | **DEM lake surface** + small supplements | Terrarium DEM + `lake_supplement.geojson` | Great Lakes from DEM; Merritt from supplement. **NE polygons opt-in only** (coarse straight coasts) |
+| **7** | **River centerlines & wide channels** | NHD flowlines, Natural Earth rivers | Riparian bias along buffers; optional water at 1:1 |
 | **8** (optional) | **Wetlands / mangrove masks** | USGS NWI, Copernicus GLW | Marsh surface + biome override |
 
 Sprint 6 alone fixes most “missing Lake Tahoe / wrong Merritt shape” issues. Sprint 7 fixes “walk 10 km with no sign of the Mississippi.”

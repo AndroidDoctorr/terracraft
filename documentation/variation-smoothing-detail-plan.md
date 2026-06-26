@@ -632,6 +632,22 @@ Improves inland lake depth from DEM meter spill and adds drainage-corridor veget
 
 ---
 
+## Sprint 6 — Hydro lakes (reverted for Great Lakes)
+
+Natural Earth polygons and DEM “lake surface” fill both **broke Great Lakes coasts** (straight lines, flooded Chicago). Current defaults:
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| `useHydroLakePolygons` | **false** | Do not enable for Lake Michigan |
+| `hydroLakeSupplementEnabled` | true | Lake Merritt only (California) |
+| Water elsewhere | Sprint 2/5 DEM | Depression basins + ocean/estuary only |
+
+**Great Lakes + Chicago River:** need proper regional hydro (USGS NHD bathymetry + river lines) in a future sprint — not global NE polygons or flat-elevation DEM fill.
+
+**After updating:** set `useHydroLakePolygons = false` in `terracraft-common.toml` if you enabled it earlier; regenerate Chicago chunks.
+
+---
+
 ## Implementation order (revised)
 
 ```
@@ -641,7 +657,7 @@ Phase 2  FloraPlacementMode + create-world UI + level save data
 Phase 3  MateriaBridge (historical + biome JSON tables, soft dep)
 Phase 4  Biome variant profiles (density, clearings) — **shipped Sprint 3** (see below)
 Phase 5  Terrain smoothing (bilinear DEM, shoreline) — **partial: lake depth Sprint 5**
-Phase 5b Hydro vectors (ArcGIS lakes) — **planned Sprint 6**, see [hydro-data.md](hydro-data.md)
+Phase 5b Hydro vectors (ArcGIS lakes) — **shipped Sprint 6**, see [hydro-data.md](hydro-data.md)
 Phase 5c Hydro vectors (rivers / riparian) — **planned Sprint 7**
 Phase 6  Feature gen audit on clones
 Phase 7  Ecoregion border anti-alias — **shipped Sprint 4**

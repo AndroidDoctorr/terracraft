@@ -286,6 +286,74 @@ public final class TerracraftConfig
             .comment("Minimum riparian strength (0-1) for gallery-tree density boost on steppe/savanna/plains.")
             .defineInRange("riparianGalleryTreeStrength", 0.35D, 0.1D, 1.0D);
 
+    public static final ForgeConfigSpec.BooleanValue useHydroLakePolygons = BUILDER
+            .comment("Hydro lake polygons")
+            .comment("Use Natural Earth lake polygons (NOT recommended — coarse straight coastlines, flooded Great Lakes cities when combined with DEM tricks). Leave false.")
+            .define("useHydroLakePolygons", false);
+
+    public static final ForgeConfigSpec.BooleanValue hydroLakeSupplementEnabled = BUILDER
+            .comment("Use bundled small-lake supplements only (Lake Merritt). Does not affect Great Lakes coasts.")
+            .define("hydroLakeSupplementEnabled", true);
+
+    public static final ForgeConfigSpec.BooleanValue regionalWaterEnabled = BUILDER
+            .comment("Regional water vectors")
+            .comment("High-detail OSM/NHD water polygons for playtest metros (Chicago harbors, river mouth). Replaces coarse Natural Earth lake shapes.")
+            .define("regionalWaterEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue regionalWaterShoreToleranceMeters = BUILDER
+            .comment("Max elevation above local spill to still treat a regional vector cell as water.")
+            .defineInRange("regionalWaterShoreToleranceMeters", 1.0D, 0.0D, 10.0D);
+
+    public static final ForgeConfigSpec.DoubleValue regionalRiverBufferMeters = BUILDER
+            .comment("Half-width buffer applied to regional river/canal centerlines when building water polygons.")
+            .defineInRange("regionalRiverBufferMeters", 35.0D, 5.0D, 150.0D);
+
+    public static final ForgeConfigSpec.BooleanValue regionalWaterCarveEnabled = BUILDER
+            .comment("Carve river/harbor channels when regional vector water sits above mapped terrain (Chicago River through downtown).")
+            .define("regionalWaterCarveEnabled", true);
+
+    public static final ForgeConfigSpec.IntValue regionalWaterMinDepthBlocks = BUILDER
+            .comment("Minimum carved depth for regional vector water channels.")
+            .defineInRange("regionalWaterMinDepthBlocks", 2, 1, 8);
+
+    public static final ForgeConfigSpec.BooleanValue greatLakesPlateauEnabled = BUILDER
+            .comment("Great Lakes plateau water")
+            .comment("Fill flat open-lake cells from DEM elevation (~176 m for Lake Michigan) where depression detection fails.")
+            .define("greatLakesPlateauEnabled", true);
+
+    public static final ForgeConfigSpec.DoubleValue greatLakesPlateauLevelMeters = BUILDER
+            .comment("Expected open-water surface elevation for Lake Michigan (meters).")
+            .defineInRange("greatLakesPlateauLevelMeters", 176.0D, 150.0D, 200.0D);
+
+    public static final ForgeConfigSpec.DoubleValue greatLakesPlateauBandMeters = BUILDER
+            .comment("Elevation band around the plateau level treated as open lake water.")
+            .defineInRange("greatLakesPlateauBandMeters", 1.5D, 0.5D, 5.0D);
+
+    public static final ForgeConfigSpec.BooleanValue autoDownloadHydroLakeData = BUILDER
+            .comment("Download Natural Earth lake GeoJSON on first run if the data file is missing.")
+            .define("autoDownloadHydroLakeData", false);
+
+    public static final ForgeConfigSpec.ConfigValue<String> hydroLakeDataFile = BUILDER
+            .comment("Path to hydro_lakes.geojson relative to .minecraft/terracraft/data/, or an absolute path.")
+            .define("hydroLakeDataFile", "hydro_lakes.geojson");
+
+    public static final ForgeConfigSpec.ConfigValue<String> hydroLakeDownloadUrl = BUILDER
+            .comment("URL for Natural Earth ne_10m_lakes GeoJSON download.")
+            .define("hydroLakeDownloadUrl",
+                    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_lakes.geojson");
+
+    public static final ForgeConfigSpec.IntValue hydroLakeZoom = BUILDER
+            .comment("Web Mercator tile zoom for cached hydro lake raster tiles (legacy fast path). Higher = sharper shorelines.")
+            .defineInRange("hydroLakeZoom", 8, 5, 12);
+
+    public static final ForgeConfigSpec.BooleanValue hydroLakePreciseSampling = BUILDER
+            .comment("Use exact point-in-polygon lake tests instead of raster tiles (recommended; smoother coastlines).")
+            .define("hydroLakePreciseSampling", true);
+
+    public static final ForgeConfigSpec.DoubleValue hydroLakeShoreToleranceMeters = BUILDER
+            .comment("Only fill hydro lake water when DEM elevation is at or below local spill plus this tolerance (meters). Prevents flooding coastal land inside lake polygons.")
+            .defineInRange("hydroLakeShoreToleranceMeters", 0.5D, 0.0D, 10.0D);
+
     public static final ForgeConfigSpec.ConfigValue<String> floraPlacementDefault = BUILDER
             .comment("Default flora placement for new worlds: historical (native ranges) or biome (climate-based, Materia-like).")
             .define("floraPlacementDefault", "historical");

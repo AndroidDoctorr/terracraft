@@ -11,6 +11,12 @@ import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.geo.ecoregion.EcoregionTileCache;
 import com.torr.terracraft.geo.ecoregion.WwfEcoregionDataset;
 import com.torr.terracraft.geo.ecoregion.WwfEcoregionDownloader;
+import com.torr.terracraft.geo.hydro.CachedHydroLakeSampler;
+import com.torr.terracraft.geo.hydro.HydroLakeDataset;
+import com.torr.terracraft.geo.hydro.HydroLakeDownloader;
+import com.torr.terracraft.geo.hydro.HydroLakeSamplerHolder;
+import com.torr.terracraft.geo.hydro.HydroLakeTileCache;
+import com.torr.terracraft.geo.hydro.RegionalWaterSamplerHolder;
 import com.torr.terracraft.world.biome.BiomeCloneRegistry;
 import com.torr.terracraft.world.biome.BiomeTransitionRegistry;
 import com.torr.terracraft.world.biome.BiomeVariantRegistry;
@@ -27,6 +33,7 @@ public final class TerracraftBootstrap
 {
     private static DemTileCache demTileCache;
     private static EcoregionTileCache ecoregionTileCache;
+    private static HydroLakeTileCache hydroLakeTileCache;
 
     private TerracraftBootstrap()
     {
@@ -42,7 +49,34 @@ public final class TerracraftBootstrap
             BiomeTransitionRegistry.load();
             initElevationSampler();
             initEcoregionSampler();
+            initRegionalWaterSampler();
+            initHydroLakeSampler();
         });
+    }
+
+    public static void initRegionalWaterSampler()
+    {
+        if (!TerracraftConfig.regionalWaterEnabled.get())
+        {
+            RegionalWaterSamplerHolder.resetToStub();
+            terracraft.LOGGER.info("Terracraft regional water: disabled");
+            return;
+        }
+
+        try
+        {
+            HydroLakeDataset dataset = HydroLakeDataset.loadFromResource(
+                    "regional/chicago_water.geojson",
+                    "Chicago OSM"
+            );
+            RegionalWaterSamplerHolder.set(new CachedHydroLakeSampler(dataset, null));
+            terracraft.LOGGER.info("Terracraft regional water: {} Chicago metro polygons (OSM)", dataset.featureCount());
+        }
+        catch (Exception exception)
+        {
+            terracraft.LOGGER.warn("Terracraft regional water: failed to initialize — {}", exception.toString());
+            RegionalWaterSamplerHolder.resetToStub();
+        }
     }
 
     public static void initElevationSampler()
@@ -126,6 +160,75 @@ public final class TerracraftBootstrap
             terracraft.LOGGER.warn("Terracraft ecoregions: failed to initialize — {}", exception.toString());
             EcoregionSamplerHolder.resetToStub();
         }
+    }
+
+    public static void initHydroLakeSampler()
+    {
+        boolean naturalEarth = TerracraftConfig.useHydroLakePolygons.get();
+        boolean supplement = TerracraftConfig.hydroLakeSupplementEnabled.get();
+
+        if (!naturalEarth && !supplement)
+        {
+            HydroLakeSamplerHolder.resetToStub();
+            terracraft.LOGGER.info("Terracraft hydro lakes: disabled");
+            return;
+        }
+
+        try
+        {
+            HydroLakeDataset dataset;
+            if (naturalEarth)
+            {
+                Path dataRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("data");
+                Path geoJsonPath = resolveDataPath(dataRoot, TerracraftConfig.hydroLakeDataFile.get());
+
+                if (TerracraftConfig.autoDownloadHydroLakeData.get())
+                {
+                    HydroLakeDownloader.downloadIfMissing(geoJsonPath, TerracraftConfig.hydroLakeDownloadUrl.get());
+                }
+
+                if (!Files.isRegularFile(geoJsonPath))
+                {
+                    terracraft.LOGGER.warn(
+                            "Terracraft hydro lakes: Natural Earth file missing at {} — skipping NE polygons.",
+                            geoJsonPath.toAbsolutePath()
+                    );
+                    if (!supplement)
+                    {
+                        HydroLakeSamplerHolder.resetToStub();
+                        return;
+                    }
+                    dataset = HydroLakeDataset.loadSupplementOnly();
+                }
+                else
+                {
+                    dataset = HydroLakeDataset.load(geoJsonPath);
+                }
+            }
+            else
+            {
+                dataset = HydroLakeDataset.loadSupplementOnly();
+            }
+
+            Path cacheRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("hydro_lake_cache_v1");
+            hydroLakeTileCache = new HydroLakeTileCache(cacheRoot, TerracraftConfig.hydroLakeZoom.get(), dataset);
+            HydroLakeSamplerHolder.set(new CachedHydroLakeSampler(dataset, hydroLakeTileCache));
+            terracraft.LOGGER.info("Terracraft hydro lakes: {} polygons (NE={}, supplement={}), cache {}",
+                    dataset.featureCount(),
+                    naturalEarth,
+                    supplement,
+                    cacheRoot.toAbsolutePath());
+        }
+        catch (Exception exception)
+        {
+            terracraft.LOGGER.warn("Terracraft hydro lakes: failed to initialize — {}", exception.toString());
+            HydroLakeSamplerHolder.resetToStub();
+        }
+    }
+
+    public static HydroLakeTileCache hydroLakeTileCache()
+    {
+        return hydroLakeTileCache;
     }
 
     private static Path resolveDataPath(Path dataRoot, String configuredPath)

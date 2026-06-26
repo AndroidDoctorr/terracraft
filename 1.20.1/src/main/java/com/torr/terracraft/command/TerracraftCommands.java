@@ -16,6 +16,9 @@ import com.torr.terracraft.geo.TerrainElevationMapper;
 import com.torr.terracraft.geo.TerrariumElevationSampler;
 import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
+import com.torr.terracraft.geo.hydro.HydroLakeInfo;
+import com.torr.terracraft.geo.hydro.HydroLakeSamplerHolder;
+import com.torr.terracraft.geo.hydro.RegionalWaterSamplerHolder;
 import com.torr.terracraft.world.PlanetEarthSettingsHelper;
 import com.torr.terracraft.world.biome.EcoregionBorderSampler;
 import com.torr.terracraft.world.biome.RainShadowPlacement;
@@ -145,11 +148,13 @@ public final class TerracraftCommands
                 Integer.toString(ecoregion.ecoId())
         ), false);
         source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
-                "World scale: %s (%.0f blocks/deg), flora: %s, ecoregions: %s",
+                "World scale: %s (%.0f blocks/deg), flora: %s, ecoregions: %s, hydro: %s, regional: %s",
                 scaleLabel,
                 blocksPerDegree,
                 floraMode.configValue(),
-                EcoregionSamplerHolder.isStub() ? "STUB (run tools/download_ecoregions.ps1)" : "loaded"
+                EcoregionSamplerHolder.isStub() ? "STUB (run tools/download_ecoregions.ps1)" : "loaded",
+                HydroLakeSamplerHolder.isStub() ? "STUB" : "supplement",
+                RegionalWaterSamplerHolder.isStub() ? "STUB" : "Chicago OSM"
         )), false);
         if (TerrainElevationMapper.isEnabled()
                 && ElevationSamplerHolder.get() instanceof TerrariumElevationSampler terrarium)
@@ -251,6 +256,24 @@ public final class TerracraftCommands
                     riparian.strength(),
                     riparian.corridor() ? "yes" : "no",
                     riparian.reliefMeters()
+            )), false);
+        }
+        if (TerracraftConfig.regionalWaterEnabled.get())
+        {
+            HydroLakeInfo regional = RegionalWaterSamplerHolder.get().sample(geo.latitude(), geo.longitude());
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Regional water: %s%s",
+                    regional.isLake() ? regional.name() : "none",
+                    regional.isLake() ? String.format(Locale.ROOT, " (#%d)", regional.lakeIndex()) : ""
+            )), false);
+        }
+        if (TerracraftConfig.useHydroLakePolygons.get() || TerracraftConfig.hydroLakeSupplementEnabled.get())
+        {
+            HydroLakeInfo hydroLake = HydroLakeSamplerHolder.get().sample(geo.latitude(), geo.longitude());
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "Hydro lake: %s%s",
+                    hydroLake.isLake() ? hydroLake.name() : "none",
+                    hydroLake.isLake() ? String.format(Locale.ROOT, " (#%d)", hydroLake.lakeIndex()) : ""
             )), false);
         }
         if (!placedBiomeId.equals(classifiedBiome.location().toString()))

@@ -1,9 +1,12 @@
 package com.torr.terracraft.geo;
 
 import com.torr.terracraft.config.TerracraftConfig;
+import com.torr.terracraft.geo.hydro.GreatLakesPlateauWater;
+import com.torr.terracraft.geo.hydro.HydroLakeSamplerHolder;
+import com.torr.terracraft.geo.hydro.RegionalWaterSamplerHolder;
+import com.torr.terracraft.world.gen.LakeDepthMapper;
 import com.torr.terracraft.world.gen.WaterColumnPlan;
 import com.torr.terracraft.world.gen.WaterColumnPlanner;
-import com.torr.terracraft.world.gen.LakeDepthMapper;
 
 /**
  * 18×18 elevation grid (16×16 chunk plus one-block border on each side) for terrain
@@ -84,7 +87,12 @@ public final class ChunkElevationField
         {
             for (int gridZ = 0; gridZ < GRID_SIZE; gridZ++)
             {
-                boolean inlandLake = isInlandDepressionGrid(
+                int blockX = chunkMinX - 1 + gridX;
+                int blockZ = chunkMinZ - 1 + gridZ;
+                double latitude = EarthProjection.blockZToLatitude(blockZ);
+                double longitude = EarthProjection.blockXToLongitude(blockX);
+                double spillMeters = spillMetersGrid(grid, gridX, gridZ);
+                boolean demLake = isInlandDepressionGrid(
                         surfaceGrid,
                         grid,
                         gridX,
@@ -92,10 +100,39 @@ public final class ChunkElevationField
                         seaLevelMeters,
                         seaLevelBlockY
                 );
+                boolean regionalWater = isRegionalWaterCell(
+                        latitude,
+                        longitude,
+                        grid[gridX][gridZ],
+                        seaLevelMeters,
+                        oceanThreshold,
+                        oceanTouch[gridX][gridZ]
+                );
+                boolean plateauLake = GreatLakesPlateauWater.isWaterCell(
+                        latitude,
+                        longitude,
+                        grid[gridX][gridZ]
+                );
+                boolean hydroVectorLake = isVectorWaterCell(
+                        HydroLakeSamplerHolder.get(),
+                        TerracraftConfig.hydroLakeSupplementEnabled.get()
+                                || TerracraftConfig.useHydroLakePolygons.get(),
+                        latitude,
+                        longitude,
+                        grid[gridX][gridZ],
+                        spillMeters,
+                        seaLevelMeters,
+                        oceanThreshold,
+                        oceanTouch[gridX][gridZ],
+                        TerracraftConfig.hydroLakeShoreToleranceMeters.get()
+                );
+                boolean inlandLake = demLake || regionalWater || hydroVectorLake || plateauLake;
                 int lakeSurfaceY = inlandLake
-                        ? LakeDepthMapper.lakeSpillBlockY(
+                        ? lakeSurfaceBlockY(
+                                regionalWater,
+                                plateauLake,
                                 grid[gridX][gridZ],
-                                spillMetersGrid(grid, gridX, gridZ),
+                                spillMeters,
                                 surfaceGrid[gridX][gridZ],
                                 spillSurfaceBlockYGrid(surfaceGrid, gridX, gridZ)
                         )
@@ -107,7 +144,8 @@ public final class ChunkElevationField
                         seaLevelMeters,
                         inlandLake,
                         lakeSurfaceY,
-                        touchesOcean[gridX][gridZ]
+                        touchesOcean[gridX][gridZ],
+                        regionalWater
                 );
             }
         }
@@ -118,6 +156,101 @@ public final class ChunkElevationField
     private static boolean isOceanCell(double rawMeters, double seaLevelMeters, double oceanThreshold)
     {
         return rawMeters <= seaLevelMeters + oceanThreshold;
+    }
+
+    private static boolean isRegionalWaterCell(
+            double latitude,
+            double longitude,
+            double rawMeters,
+            double seaLevelMeters,
+            double oceanThreshold,
+            boolean oceanCell
+    )
+    {
+        if (!TerracraftConfig.regionalWaterEnabled.get()
+                || RegionalWaterSamplerHolder.get() instanceof com.torr.terracraft.geo.hydro.StubHydroLakeSampler
+                || oceanCell)
+        {
+            return false;
+        }
+
+        if (rawMeters <= seaLevelMeters + oceanThreshold)
+        {
+            return false;
+        }
+
+        return RegionalWaterSamplerHolder.get().sample(latitude, longitude).isLake();
+    }
+
+    private static int lakeSurfaceBlockY(
+            boolean regionalWater,
+            boolean plateauLake,
+            double centerMeters,
+            double spillMeters,
+            int mappedFloorY,
+            int blockSpillY
+    )
+    {
+        if (regionalWater && TerracraftConfig.regionalWaterCarveEnabled.get())
+        {
+            int spillY = spillMeters == Double.POSITIVE_INFINITY
+                    ? mappedFloorY
+                    : ElevationScale.metersToBlockY(spillMeters);
+            int carvedTop = Math.min(spillY, mappedFloorY - 1)
+                    + TerracraftConfig.waterSurfaceBlockOffset.get();
+            int minDepth = TerracraftConfig.regionalWaterMinDepthBlocks.get();
+            carvedTop = Math.max(carvedTop, mappedFloorY - minDepth);
+            return carvedTop - TerracraftConfig.waterSurfaceBlockOffset.get();
+        }
+
+        if (plateauLake)
+        {
+            double surfaceMeters = GreatLakesPlateauWater.lakeSurfaceMeters(spillMeters);
+            return LakeDepthMapper.lakeSpillBlockY(
+                    centerMeters,
+                    surfaceMeters,
+                    mappedFloorY,
+                    ElevationScale.metersToBlockY(surfaceMeters)
+            );
+        }
+
+        return LakeDepthMapper.lakeSpillBlockY(centerMeters, spillMeters, mappedFloorY, blockSpillY);
+    }
+
+    private static boolean isVectorWaterCell(
+            com.torr.terracraft.geo.hydro.HydroLakeSampler sampler,
+            boolean enabled,
+            double latitude,
+            double longitude,
+            double rawMeters,
+            double spillMeters,
+            double seaLevelMeters,
+            double oceanThreshold,
+            boolean oceanCell,
+            double toleranceMeters
+    )
+    {
+        if (!enabled || sampler instanceof com.torr.terracraft.geo.hydro.StubHydroLakeSampler || oceanCell)
+        {
+            return false;
+        }
+
+        if (rawMeters <= seaLevelMeters + oceanThreshold)
+        {
+            return false;
+        }
+
+        if (!sampler.sample(latitude, longitude).isLake())
+        {
+            return false;
+        }
+
+        if (spillMeters == Double.POSITIVE_INFINITY)
+        {
+            return true;
+        }
+
+        return rawMeters <= spillMeters + toleranceMeters;
     }
 
     private static boolean touchesOceanGrid(boolean[][] oceanTouch, int gridX, int gridZ)
