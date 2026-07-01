@@ -45,7 +45,12 @@ function Get-HistoricalClone([int]$biomeCode, [string]$realmKey, [string]$ecoNam
     $name = $ecoName.ToLower()
     switch ($biomeCode) {
         12 { return "terracraft:mediterranean_scrub" }
-        13 { return "terracraft:semi_arid_scrub" }
+        13 {
+            if ($name -match "shrub|steppe|sagebrush|semi.?arid|montane|plateau|basin|sonoran|mojave|chihuahuan|arizona|colorado plateau|great basin|utah|nevada") {
+                return "terracraft:semi_arid_scrub"
+            }
+            return "terracraft:desert_arid"
+        }
         2 { return "terracraft:tropical_dry_forest" }
         3 { return "terracraft:tropical_dry_forest" }
         10 { return "terracraft:montane_meadow" }
@@ -71,6 +76,7 @@ function Infer-RealmFromCenter([double]$lon, [double]$lat) {
         if ($lat -ge 23.5) { return "nearctic" }
         if ($lat -ge -55) { return "neotropical" }
     }
+    if ($lat -ge 35 -and $lat -le 72 -and $lon -ge -25 -and $lon -lt 45) { return "palearctic" }
     if ($lat -ge -35 -and $lat -lt 35 -and $lon -ge -20 -and $lon -lt 55) { return "afrotropical" }
     if ($lat -ge -50 -and $lat -lt 15 -and $lon -ge 110 -and $lon -lt 180) { return "australasian" }
     if ($lat -ge -15 -and $lat -lt 30 -and $lon -ge 60 -and $lon -lt 150) { return "indomalayan" }
@@ -106,6 +112,19 @@ $nameOverrides = @(
     @{ substring = "Mojave"; clone = "terracraft:semi_arid_scrub" }
     @{ substring = "Arizona"; clone = "terracraft:semi_arid_scrub" }
     @{ substring = "Great Basin"; clone = "terracraft:semi_arid_scrub" }
+    @{ substring = "Sahara"; clone = "terracraft:desert_arid" }
+    @{ substring = "Erg"; clone = "terracraft:desert_arid" }
+    @{ substring = "Hamada"; clone = "terracraft:desert_arid" }
+    @{ substring = "Namib"; clone = "terracraft:desert_arid" }
+    @{ substring = "Gobi"; clone = "terracraft:desert_arid" }
+    @{ substring = "Atacama"; clone = "terracraft:desert_arid" }
+    @{ substring = "Arabian desert"; clone = "terracraft:desert_arid" }
+    @{ substring = "Libyan desert"; clone = "terracraft:desert_arid" }
+    @{ substring = "North Saharan"; clone = "terracraft:desert_arid" }
+    @{ substring = "playa"; clone = "terracraft:playa_salt" }
+    @{ substring = "salt flat"; clone = "terracraft:playa_salt" }
+    @{ substring = "salt pan"; clone = "terracraft:playa_salt" }
+    @{ substring = "English Lowlands"; clone = "terracraft:forest_palearctic" }
 )
 
 foreach ($feature in $geo.features) {
@@ -146,6 +165,9 @@ Write-Utf8NoBom (Join-Path $OutputDir "clone_map_biome.json") ($biomeFlora | Con
 $unique = @{}
 foreach ($v in $historical.Values) { $unique[$v] = $true }
 foreach ($v in $biomeFlora.Values) { $unique[$v] = $true }
+foreach ($mandatory in @("terracraft:desert_arid", "terracraft:playa_salt")) {
+    $unique[$mandatory] = $true
+}
 Write-Utf8NoBom (Join-Path $OutputDir "required_biomes.txt") (($unique.Keys | Sort-Object) -join "`n")
 
 Write-Host "Wrote $($historical.Count) ECO_ID mappings to $OutputDir"

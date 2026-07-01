@@ -124,6 +124,7 @@ public class TerracraftChunkGenerator extends ChunkGenerator
         int maxY = chunk.getMaxBuildHeight() - 1;
         double seaLevelMeters = TerracraftConfig.seaLevelMeters.get();
         ChunkElevationField field = ChunkElevationField.sample(chunkMinX, chunkMinZ);
+        ChunkSurfaceSpillField spillField = ChunkSurfaceSpillField.build(field, chunkMinX, chunkMinZ);
 
         for (int localX = 0; localX < 16; localX++)
         {
@@ -132,6 +133,8 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                 int worldX = chunkMinX + localX;
                 int worldZ = chunkMinZ + localZ;
                 double elevationMeters = field.centerMeters(localX, localZ);
+                double latitude = EarthProjection.blockZToLatitude(worldZ);
+                double longitude = EarthProjection.blockXToLongitude(worldX);
                 WaterColumnPlan waterPlan = field.waterPlan(localX, localZ);
                 int floorY = waterPlan.floorY();
                 int waterTopY = waterPlan.waterTopY();
@@ -151,6 +154,11 @@ public class TerracraftChunkGenerator extends ChunkGenerator
                     pos.set(worldX, y, worldZ);
                     BlockState state = terrainBlock(
                             biome,
+                            spillField,
+                            localX,
+                            localZ,
+                            latitude,
+                            longitude,
                             elevationMeters,
                             seaLevelMeters,
                             y,
@@ -169,6 +177,11 @@ public class TerracraftChunkGenerator extends ChunkGenerator
 
     private static BlockState terrainBlock(
             Holder<Biome> biome,
+            ChunkSurfaceSpillField spillField,
+            int localX,
+            int localZ,
+            double latitude,
+            double longitude,
             double elevationMeters,
             double seaLevelMeters,
             int y,
@@ -192,6 +205,11 @@ public class TerracraftChunkGenerator extends ChunkGenerator
             boolean seafloor = waterTopY != Integer.MIN_VALUE && waterTopY > floorY;
             return ShorelineSurface.surfaceBlock(
                     biome,
+                    spillField,
+                    localX,
+                    localZ,
+                    latitude,
+                    longitude,
                     elevationMeters,
                     seaLevelMeters,
                     floorY,
@@ -202,6 +220,11 @@ public class TerracraftChunkGenerator extends ChunkGenerator
         }
         return ShorelineSurface.subsurfaceBlock(
                 biome,
+                spillField,
+                localX,
+                localZ,
+                latitude,
+                longitude,
                 y,
                 floorY,
                 elevationMeters,

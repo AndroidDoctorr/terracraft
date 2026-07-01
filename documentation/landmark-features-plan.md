@@ -2,6 +2,8 @@
 
 Some places are iconic because of **specific geology or human history**, not because a climate polygon says "scrub" or "plains." Terracraft's ecoregion + DEM pipeline handles broad regions well; this doc tracks **point/area landmarks** that may need bespoke treatment later.
 
+**Master backlog:** see [special-places.md](special-places.md) for the full curated list (Sedona, playas, coasts, volcanoes, etc.).
+
 ## Goal
 
 Capture recognizable sites that topography and biome alone miss:
@@ -24,11 +26,16 @@ Capture recognizable sites that topography and biome alone miss:
 ## Implementation sketch (when prioritized)
 
 ```
-1. tools/landmarks/*.geojson     — small polygons (Dover, Sedona, …)
-2. LandmarkRegistry.java        — loaded at startup, spatial index
-3. LandmarkSurfaceRules.java    — overrides surface block after biome rules
-4. Optional placed_feature       — rainbow eucalyptus, chalk vegetation
+1. data/terracraft/regional/biome_zones/*.geojson  — bundled polygons (Bonneville, Giza, …)
+2. .minecraft/terracraft/data/regional/biome_zones/ — user/OSM-imported polygons
+3. RegionalBiomeZones.java                         — point-in-polygon biome override (shipped)
+4. BiomeSurfaceRules.java                          — playa salt / desert sand / slope bands (shipped)
+5. ChunkSurfaceSpillField.java                     — directional downhill spill (Sedona, playa, Cairo) (shipped)
+6. tools/import_osm_biome_zone.ps1                 — Overpass → GeoJSON helper
+7. LandmarkSurfaceRules.java                       — future: chalk cliffs, travertine, lava palettes
 ```
+
+See [regional-biome-zones.md](regional-biome-zones.md) for OSM/ArcGIS import notes.
 
 ## Rainbow eucalyptus (easter egg)
 

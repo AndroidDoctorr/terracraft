@@ -79,8 +79,12 @@ Query parameters Terracraft uses:
 Cache location:
 
 ```
-.minecraft/terracraft/ecoregion_cache/{zoom}/{x}_{y}.png
+.minecraft/terracraft/ecoregion_cache_v3/z{zoom}_ss{supersample}/{x}_{y}.png
 ```
+
+Example: `ecoregion_cache_v3/z7_ss2/42_95.png` at default zoom 7 with 2× supersampling.
+
+**After changing `ecoregionZoom` or `ecoregionRasterSupersample`:** new tiles build automatically under a new subfolder. Old `ecoregion_cache` / `ecoregion_cache_v2` folders can be deleted to save disk space.
 
 Config keys (`.minecraft/config/terracraft-common.toml`):
 
@@ -88,4 +92,5 @@ Config keys (`.minecraft/config/terracraft-common.toml`):
 - `useClimateFallback` — use latitude/rainfall heuristic when no polygon matches
 - `autoDownloadEcoregionData` — download GeoJSON if missing
 - `ecoregionDataFile` — path to GeoJSON (relative to `terracraft/data/` or absolute)
-- `ecoregionZoom` — tile zoom for the raster cache (default `5`)
+- `ecoregionZoom` — tile zoom for the raster cache (default `7`, ~1.2 km/px at equator)
+- `ecoregionRasterSupersample` — render at N×256 then downsample for smoother edges (default `2`)

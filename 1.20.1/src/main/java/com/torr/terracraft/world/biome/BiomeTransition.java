@@ -41,7 +41,8 @@ public final class BiomeTransition
                     longitude,
                     centerEcoregion,
                     centerBiome,
-                    floraMode
+                    floraMode,
+                    elevationMeters
             );
         }
 
@@ -82,7 +83,8 @@ public final class BiomeTransition
             double longitude,
             EcoregionInfo centerEcoregion,
             ResourceKey<Biome> centerBiome,
-            FloraPlacementMode floraMode
+            FloraPlacementMode floraMode,
+            double elevationMeters
     )
     {
         EcoregionBorderSampler.BorderSample border = EcoregionBorderSampler.sample(
@@ -101,7 +103,8 @@ public final class BiomeTransition
                 border.neighborEcoregion(),
                 latitude,
                 longitude,
-                floraMode
+                floraMode,
+                elevationMeters
         );
         if (neighborBiome.equals(centerBiome))
         {
@@ -128,9 +131,43 @@ public final class BiomeTransition
                     return transition;
                 }
             }
+
+            if (shouldPreserveAridCenter(centerArchetype, neighborArchetype))
+            {
+                return centerBiome;
+            }
+        }
+
+        if (shouldPreserveAridCenter(
+                BiomeArchetype.fromBiome(centerBiome),
+                BiomeArchetype.fromBiome(neighborBiome)
+        ))
+        {
+            return centerBiome;
         }
 
         return neighborBiome;
+    }
+
+    private static boolean shouldPreserveAridCenter(BiomeArchetype center, BiomeArchetype neighbor)
+    {
+        if (center == null || neighbor == null)
+        {
+            return false;
+        }
+
+        if (center != BiomeArchetype.DESERT && center != BiomeArchetype.SEMI_ARID)
+        {
+            return false;
+        }
+
+        return neighbor == BiomeArchetype.FOREST
+                || neighbor == BiomeArchetype.PLAINS
+                || neighbor == BiomeArchetype.JUNGLE
+                || neighbor == BiomeArchetype.SAVANNA
+                || neighbor == BiomeArchetype.FLOODPLAIN
+                || neighbor == BiomeArchetype.TAIGA
+                || neighbor == BiomeArchetype.TROPICAL_DRY;
     }
 
     static double transitionHash(long worldSeed, int blockX, int blockZ)

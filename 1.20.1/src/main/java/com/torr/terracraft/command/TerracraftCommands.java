@@ -88,23 +88,35 @@ public final class TerracraftCommands
     {
         ServerPlayer player = source.getPlayerOrException();
         PlanetEarthSettingsHelper.syncFromLevel(player.serverLevel());
-        double elevation = elevationMeters != null
-                ? elevationMeters
-                : source.getLevel().getHeight(
-                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                        EarthProjection.longitudeToBlockX(longitude),
-                        EarthProjection.latitudeToBlockZ(latitude)
-                );
-        BlockGeoTarget target = EarthProjection.geoToBlock(latitude, longitude, elevation);
-        player.teleportTo(target.blockX() + 0.5D, target.blockY(), target.blockZ() + 0.5D);
+        BlockGeoTarget target = EarthProjection.geoToBlock(
+                latitude,
+                longitude,
+                elevationMeters != null ? elevationMeters : 0.0D
+        );
+        double teleportY = elevationMeters != null ? target.blockY() : 150.0D;
+        player.teleportTo(target.blockX() + 0.5D, teleportY, target.blockZ() + 0.5D);
 
-        source.sendSuccess(() -> Component.translatable(
-                "commands.terracraft.tpll.success",
-                formatCoord(latitude),
-                formatCoord(longitude),
-                formatCoord(elevation),
-                target.blockY()
-        ), true);
+        if (elevationMeters != null)
+        {
+            source.sendSuccess(() -> Component.translatable(
+                    "commands.terracraft.tpll.success",
+                    formatCoord(latitude),
+                    formatCoord(longitude),
+                    formatCoord(elevationMeters),
+                    (int) teleportY
+            ), true);
+        }
+        else
+        {
+            source.sendSuccess(() -> Component.literal(String.format(
+                    Locale.ROOT,
+                    "Teleported to lat %s lon %s at y=150 (block %d, %d)",
+                    formatCoord(latitude),
+                    formatCoord(longitude),
+                    target.blockX(),
+                    target.blockZ()
+            )), true);
+        }
         return 1;
     }
 

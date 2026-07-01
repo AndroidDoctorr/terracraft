@@ -192,8 +192,12 @@ public final class TerracraftConfig
                             + "&resultRecordCount=2000&resultOffset=%d");
 
     public static final ForgeConfigSpec.IntValue ecoregionZoom = BUILDER
-            .comment("Web Mercator tile zoom for cached ecoregion raster tiles. Lower is faster to build; 5 is ~5 km per pixel at the equator.")
-            .defineInRange("ecoregionZoom", 5, 3, 10);
+            .comment("Web Mercator tile zoom for cached ecoregion raster tiles. 7 ≈ 1.2 km/px at the equator; 8 ≈ 600 m/px.")
+            .defineInRange("ecoregionZoom", 7, 3, 10);
+
+    public static final ForgeConfigSpec.IntValue ecoregionRasterSupersample = BUILDER
+            .comment("Render each ecoregion tile at this multiple of 256×256, then downsample for smoother polygon edges (1 = off).")
+            .defineInRange("ecoregionRasterSupersample", 2, 1, 4);
 
     public static final ForgeConfigSpec.IntValue ecoregionBorderBlendBlocks = BUILDER
             .comment("Width in blocks of ecoregion border buffer where neighbor vegetation can spill over (0 disables).")

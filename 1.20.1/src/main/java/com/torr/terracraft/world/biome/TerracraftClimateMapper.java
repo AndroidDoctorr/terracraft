@@ -28,7 +28,7 @@ public final class TerracraftClimateMapper
         return switch (biomeKey.location().getPath())
         {
             case "swamp", "mangrove_swamp" -> TerracraftBiomes.key("floodplain_meadow");
-            case "desert", "badlands" -> TerracraftBiomes.key("semi_arid_scrub");
+            case "desert", "badlands" -> TerracraftBiomes.key("desert_arid");
             case "flower_forest" -> inMediterraneanBasin(latitude, longitude)
                     ? TerracraftBiomes.MEDITERRANEAN_SCRUB
                     : TerracraftBiomes.key("forest_" + realm);
@@ -76,6 +76,16 @@ public final class TerracraftClimateMapper
 
     static boolean inSouthwestUs(double latitude, double longitude)
     {
+        if (inGreatBasinInterior(latitude, longitude))
+        {
+            return false;
+        }
+
         return latitude >= 28.0D && latitude <= 42.0D && longitude >= -125.0D && longitude <= -102.0D;
+    }
+
+    static boolean inGreatBasinInterior(double latitude, double longitude)
+    {
+        return latitude >= 36.5D && latitude <= 42.5D && longitude >= -120.0D && longitude <= -112.0D;
     }
 }

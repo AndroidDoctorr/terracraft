@@ -14,6 +14,8 @@ import com.torr.terracraft.geo.ecoregion.EcoregionInfo;
 import com.torr.terracraft.geo.ecoregion.EcoregionSamplerHolder;
 import com.torr.terracraft.world.biome.AssignableBiomes;
 import com.torr.terracraft.world.biome.BiomeTransition;
+import com.torr.terracraft.world.biome.EcoregionBiomeOverrides;
+import com.torr.terracraft.world.biome.RiparianPlacement;
 import com.torr.terracraft.world.biome.TerracraftBiomes;
 import com.torr.terracraft.world.biome.TerracraftClimateMapper;
 import net.minecraft.core.Holder;
@@ -186,12 +188,12 @@ public class TerracraftBiomeSource extends BiomeSource
         double latitude = EarthProjection.blockZToLatitude(blockZ);
         double longitude = EarthProjection.blockXToLongitude(blockX);
         double elevationMeters = ElevationSamplerHolder.get().sampleElevationMeters(latitude, longitude);
+        EcoregionInfo ecoregion = EcoregionSamplerHolder.get().sample(latitude, longitude);
         ResourceKey<Biome> biomeKey = BiomePlacement.classify(latitude, longitude, elevationMeters, floraPlacement);
 
         if (TerracraftBiomes.isTerracraft(biomeKey))
         {
-            EcoregionInfo ecoregion = EcoregionSamplerHolder.get().sample(latitude, longitude);
-            biomeKey = BiomeTransition.applyWithRiparian(
+            biomeKey = BiomeTransition.apply(
                     seed,
                     blockX,
                     blockZ,
@@ -202,6 +204,22 @@ public class TerracraftBiomeSource extends BiomeSource
                     floraPlacement,
                     elevationMeters
             );
+        }
+
+        java.util.Optional<ResourceKey<Biome>> enforced = EcoregionBiomeOverrides.resolve(
+                ecoregion,
+                latitude,
+                longitude,
+                elevationMeters
+        );
+        if (enforced.isPresent())
+        {
+            biomeKey = enforced.get();
+        }
+
+        if (TerracraftBiomes.isTerracraft(biomeKey))
+        {
+            biomeKey = RiparianPlacement.apply(biomeKey, latitude, longitude, elevationMeters);
         }
 
         return resolveBiome(biomeKey, latitude, longitude);

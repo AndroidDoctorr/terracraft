@@ -40,9 +40,26 @@ public final class BiomeCloneRegistry
                 historicalByEcoId.size(), biomeFloraByEcoId.size());
     }
 
-    public static ResourceKey<Biome> resolve(EcoregionInfo ecoregion, double latitude, double longitude, FloraPlacementMode mode)
+    public static ResourceKey<Biome> resolve(
+            EcoregionInfo ecoregion,
+            double latitude,
+            double longitude,
+            FloraPlacementMode mode,
+            double elevationMeters
+    )
     {
         load();
+
+        java.util.Optional<ResourceKey<Biome>> override = EcoregionBiomeOverrides.resolve(
+                ecoregion,
+                latitude,
+                longitude,
+                elevationMeters
+        );
+        if (override.isPresent())
+        {
+            return override.get();
+        }
 
         Map<Integer, ResourceKey<Biome>> activeMap = mode == FloraPlacementMode.BIOME ? biomeFloraByEcoId : historicalByEcoId;
         if (ecoregion.ecoId() != 0)
@@ -50,30 +67,22 @@ public final class BiomeCloneRegistry
             ResourceKey<Biome> mapped = activeMap.get(ecoregion.ecoId());
             if (mapped != null)
             {
-                return refineClone(mapped, ecoregion);
+                return mapped;
             }
         }
 
-        return refineClone(fallbackClone(ecoregion, latitude, longitude), ecoregion);
+        return fallbackClone(ecoregion, latitude, longitude);
     }
 
-    private static ResourceKey<Biome> refineClone(ResourceKey<Biome> clone, EcoregionInfo ecoregion)
+    static ResourceKey<Biome> resolvePrimary(
+            EcoregionInfo ecoregion,
+            double latitude,
+            double longitude,
+            FloraPlacementMode mode,
+            double elevationMeters
+    )
     {
-        String name = ecoregion.name();
-        if (name != null && name.toLowerCase().contains("mediterranean"))
-        {
-            return TerracraftBiomes.MEDITERRANEAN_SCRUB;
-        }
-        if (name != null && name.toLowerCase().contains("chaparral"))
-        {
-            return TerracraftBiomes.key("chaparral_nearctic");
-        }
-        return clone;
-    }
-
-    static ResourceKey<Biome> resolvePrimary(EcoregionInfo ecoregion, double latitude, double longitude, FloraPlacementMode mode)
-    {
-        return resolve(ecoregion, latitude, longitude, mode);
+        return resolve(ecoregion, latitude, longitude, mode, elevationMeters);
     }
 
     private static ResourceKey<Biome> fallbackClone(EcoregionInfo ecoregion, double latitude, double longitude)
@@ -92,7 +101,7 @@ public final class BiomeCloneRegistry
             case 11 -> TerracraftBiomes.key("tundra_" + realm);
             case 9 -> TerracraftBiomes.key("floodplain_meadow");
             case 10 -> TerracraftBiomes.key("montane_meadow");
-            case 13 -> TerracraftBiomes.key("semi_arid_scrub");
+            case 13 -> TerracraftBiomes.key("desert_arid");
             case 14 -> TerracraftBiomes.key("mangrove_coastal");
             default -> realm.equals("neotropical") || realm.equals("nearctic")
                     ? TerracraftBiomes.key("plains_" + realm)
@@ -125,6 +134,10 @@ public final class BiomeCloneRegistry
         if (longitude >= -170.0D && longitude < -30.0D)
         {
             return latitude >= 23.5D ? "nearctic" : "neotropical";
+        }
+        if (latitude >= 35.0D && latitude <= 72.0D && longitude >= -25.0D && longitude < 45.0D)
+        {
+            return "palearctic";
         }
         if (latitude >= -35.0D && latitude < 35.0D && longitude >= -20.0D && longitude < 55.0D)
         {

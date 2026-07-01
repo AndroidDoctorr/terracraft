@@ -41,7 +41,8 @@ public final class BiomePlacement
                         ecoregion,
                         latitude,
                         longitude,
-                        floraMode
+                        floraMode,
+                        elevationMeters
                 );
             }
         }

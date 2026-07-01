@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -21,21 +22,25 @@ import java.util.concurrent.Executors;
 
 public final class EcoregionTileCache
 {
+    private static final int TILE_SIZE = 256;
+
     private record TileKey(int zoom, int tileX, int tileY)
     {
     }
 
     private final Path cacheRoot;
     private final int zoom;
+    private final int rasterSupersample;
     private final WwfEcoregionDataset dataset;
     private final ExecutorService rasterExecutor;
     private final Map<TileKey, int[][]> memoryCache = new ConcurrentHashMap<>();
     private final Map<TileKey, CompletableFuture<int[][]>> inFlight = new ConcurrentHashMap<>();
 
-    public EcoregionTileCache(Path cacheRoot, int zoom, WwfEcoregionDataset dataset)
+    public EcoregionTileCache(Path cacheRoot, int zoom, int rasterSupersample, WwfEcoregionDataset dataset)
     {
         this.cacheRoot = cacheRoot;
         this.zoom = zoom;
+        this.rasterSupersample = Math.max(1, rasterSupersample);
         this.dataset = dataset;
         this.rasterExecutor = Executors.newFixedThreadPool(2, runnable ->
         {
@@ -60,6 +65,16 @@ public final class EcoregionTileCache
     public Path cacheRoot()
     {
         return cacheRoot;
+    }
+
+    public int zoom()
+    {
+        return zoom;
+    }
+
+    public int rasterSupersample()
+    {
+        return rasterSupersample;
     }
 
     public void prefetchArea(double minLat, double maxLat, double minLon, double maxLon)
@@ -118,10 +133,15 @@ public final class EcoregionTileCache
         });
     }
 
+    private Path tilePath(TileKey key)
+    {
+        return cacheRoot.resolve("z" + key.zoom() + "_ss" + rasterSupersample)
+                .resolve(key.tileX() + "_" + key.tileY() + ".png");
+    }
+
     private int[][] loadTileEcoIds(TileKey key)
     {
-        Path tilePath = cacheRoot.resolve(Integer.toString(key.zoom()))
-                .resolve(key.tileX() + "_" + key.tileY() + ".png");
+        Path tilePath = tilePath(key);
 
         try
         {
@@ -133,12 +153,14 @@ public final class EcoregionTileCache
             Files.createDirectories(tilePath.getParent());
             BufferedImage rasterized = rasterizeTile(key);
             ImageIO.write(rasterized, "png", tilePath.toFile());
-            terracraft.LOGGER.info("Cached ecoregion tile z/x/y = {}/{}/{} -> {}", key.zoom(), key.tileX(), key.tileY(), tilePath);
+            terracraft.LOGGER.info("Cached ecoregion tile z/x/y = {}/{}/{} (ss {}) -> {}",
+                    key.zoom(), key.tileX(), key.tileY(), rasterSupersample, tilePath);
             return decodeTile(rasterized);
         }
         catch (IOException exception)
         {
-            terracraft.LOGGER.warn("Failed to load ecoregion tile {}/{}/{}: {}", key.zoom(), key.tileX(), key.tileY(), exception.toString());
+            terracraft.LOGGER.warn("Failed to load ecoregion tile {}/{}/{}: {}",
+                    key.zoom(), key.tileX(), key.tileY(), exception.toString());
             return emptyTile();
         }
     }
@@ -153,8 +175,9 @@ public final class EcoregionTileCache
                 bounds.maxLongitude()
         );
 
-        BufferedImage image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics = image.createGraphics();
+        int renderSize = TILE_SIZE * rasterSupersample;
+        BufferedImage highRes = new BufferedImage(renderSize, renderSize, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = highRes.createGraphics();
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         for (WwfEcoregionFeature feature : features)
@@ -163,7 +186,7 @@ public final class EcoregionTileCache
             graphics.setColor(new java.awt.Color(rgb));
             for (List<List<double[]>> polygon : feature.polygons())
             {
-                Path2D path = buildPath(polygon, key);
+                Path2D path = buildPath(polygon, key, rasterSupersample);
                 if (path != null)
                 {
                     graphics.fill(path);
@@ -172,10 +195,53 @@ public final class EcoregionTileCache
         }
 
         graphics.dispose();
+
+        if (rasterSupersample <= 1)
+        {
+            return highRes;
+        }
+
+        return downsampleTile(highRes, rasterSupersample);
+    }
+
+    private static BufferedImage downsampleTile(BufferedImage highRes, int supersample)
+    {
+        BufferedImage image = new BufferedImage(TILE_SIZE, TILE_SIZE, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < TILE_SIZE; x++)
+        {
+            for (int y = 0; y < TILE_SIZE; y++)
+            {
+                int ecoId = majorityEcoId(highRes, x * supersample, y * supersample, supersample);
+                image.setRGB(x, y, encodeEcoId(ecoId));
+            }
+        }
         return image;
     }
 
-    private static Path2D buildPath(List<List<double[]>> polygonRings, TileKey key)
+    private static int majorityEcoId(BufferedImage image, int startX, int startY, int span)
+    {
+        Map<Integer, Integer> counts = new HashMap<>();
+        int bestId = 0;
+        int bestCount = 0;
+
+        for (int dx = 0; dx < span; dx++)
+        {
+            for (int dy = 0; dy < span; dy++)
+            {
+                int ecoId = decodeEcoId(image.getRGB(startX + dx, startY + dy));
+                int count = counts.merge(ecoId, 1, Integer::sum);
+                if (count > bestCount || (count == bestCount && ecoId != 0 && bestId == 0))
+                {
+                    bestCount = count;
+                    bestId = ecoId;
+                }
+            }
+        }
+
+        return bestId;
+    }
+
+    private static Path2D buildPath(List<List<double[]>> polygonRings, TileKey key, int supersample)
     {
         if (polygonRings.isEmpty())
         {
@@ -185,12 +251,12 @@ public final class EcoregionTileCache
         Path2D path = new Path2D.Double();
         for (List<double[]> ring : polygonRings)
         {
-            appendRing(path, ring, key);
+            appendRing(path, ring, key, supersample);
         }
         return path;
     }
 
-    private static void appendRing(Path2D path, List<double[]> ring, TileKey key)
+    private static void appendRing(Path2D path, List<double[]> ring, TileKey key, int supersample)
     {
         if (ring.isEmpty())
         {
@@ -199,28 +265,33 @@ public final class EcoregionTileCache
 
         double[] first = ring.get(0);
         path.moveTo(
-                TerrariumTileMath.longitudeToPixelX(first[0], key.zoom(), key.tileX()) + 0.5D,
-                TerrariumTileMath.latitudeToPixelY(first[1], key.zoom(), key.tileY()) + 0.5D
+                pixelCoord(TerrariumTileMath.longitudeToPixelX(first[0], key.zoom(), key.tileX()), supersample),
+                pixelCoord(TerrariumTileMath.latitudeToPixelY(first[1], key.zoom(), key.tileY()), supersample)
         );
 
         for (int index = 1; index < ring.size(); index++)
         {
             double[] point = ring.get(index);
             path.lineTo(
-                    TerrariumTileMath.longitudeToPixelX(point[0], key.zoom(), key.tileX()) + 0.5D,
-                    TerrariumTileMath.latitudeToPixelY(point[1], key.zoom(), key.tileY()) + 0.5D
+                    pixelCoord(TerrariumTileMath.longitudeToPixelX(point[0], key.zoom(), key.tileX()), supersample),
+                    pixelCoord(TerrariumTileMath.latitudeToPixelY(point[1], key.zoom(), key.tileY()), supersample)
             );
         }
 
         path.closePath();
     }
 
+    private static double pixelCoord(int pixelIndex, int supersample)
+    {
+        return pixelIndex * supersample + supersample * 0.5D;
+    }
+
     private static int[][] decodeTile(BufferedImage image)
     {
-        int[][] ecoIds = new int[256][256];
-        for (int x = 0; x < 256; x++)
+        int[][] ecoIds = new int[TILE_SIZE][TILE_SIZE];
+        for (int x = 0; x < TILE_SIZE; x++)
         {
-            for (int y = 0; y < 256; y++)
+            for (int y = 0; y < TILE_SIZE; y++)
             {
                 ecoIds[x][y] = decodeEcoId(image.getRGB(x, y));
             }
@@ -230,7 +301,7 @@ public final class EcoregionTileCache
 
     private static int[][] emptyTile()
     {
-        return new int[256][256];
+        return new int[TILE_SIZE][TILE_SIZE];
     }
 
     static int encodeEcoId(int ecoId)

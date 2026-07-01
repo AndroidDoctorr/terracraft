@@ -543,8 +543,8 @@ Materia already has tin, bauxite, malachite, sphalerite, sulfur, saltpeter, magn
 |-----|---------|---------|
 | `elevationSmoothingMode` | `bilinear` | DEM interpolation |
 | `elevationSmoothingMaxDeltaMeters` | `12` | Clamp smooth deviation |
-| `ecoregionZoom` | `7` | Sharper ecoregion tiles |
-| `ecoregionRasterSupersample` | `2` | Anti-alias eco borders |
+| `ecoregionZoom` | `7` | Sharper ecoregion tiles (~1.2 km/px) |
+| `ecoregionRasterSupersample` | `2` | Anti-alias eco borders (shipped Sprint 8) |
 | `microReliefEnabled` | `false` | Tiny height noise |
 | `biomeVariationEnabled` | `true` | Variant profiles |
 | `variationPatchScaleBlocks` | `128` | Variant patch size |

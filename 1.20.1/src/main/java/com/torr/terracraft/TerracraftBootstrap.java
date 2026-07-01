@@ -47,6 +47,8 @@ public final class TerracraftBootstrap
             BiomeCloneRegistry.load();
             BiomeVariantRegistry.load();
             BiomeTransitionRegistry.load();
+            com.torr.terracraft.integration.MateriaIntegration.init();
+            com.torr.terracraft.geo.regional.RegionalBiomeZones.load();
             initElevationSampler();
             initEcoregionSampler();
             initRegionalWaterSampler();
@@ -147,12 +149,19 @@ public final class TerracraftBootstrap
             }
 
             WwfEcoregionDataset dataset = WwfEcoregionDataset.load(geoJsonPath);
-            Path cacheRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("ecoregion_cache_v2");
-            ecoregionTileCache = new EcoregionTileCache(cacheRoot, TerracraftConfig.ecoregionZoom.get(), dataset);
+            Path cacheRoot = FMLPaths.GAMEDIR.get().resolve("terracraft").resolve("ecoregion_cache_v3");
+            int supersample = TerracraftConfig.ecoregionRasterSupersample.get();
+            ecoregionTileCache = new EcoregionTileCache(
+                    cacheRoot,
+                    TerracraftConfig.ecoregionZoom.get(),
+                    supersample,
+                    dataset
+            );
             EcoregionSamplerHolder.set(new CachedEcoregionSampler(ecoregionTileCache));
-            terracraft.LOGGER.info("Terracraft ecoregions: {} unique regions, zoom {}, cache {}",
+            terracraft.LOGGER.info("Terracraft ecoregions: {} unique regions, zoom {}, supersample {}x, cache {}",
                     dataset.uniqueEcoIdCount(),
                     TerracraftConfig.ecoregionZoom.get(),
+                    supersample,
                     cacheRoot.toAbsolutePath());
         }
         catch (Exception exception)
